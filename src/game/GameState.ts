@@ -1,5 +1,5 @@
 import {GameMap} from "../map/GameMap"
-import {ClearTileEvent, EventDispatcher} from "./GameEvent";
+import {TileUpdateEvent, EventDispatcher} from "./GameEvent";
 import {FFAGameMode} from "./mode/FFAGameMode";
 import {GameMode} from "./mode/GameMode"
 import {playerManager, PlayerManager} from "./player/PlayerManager"
@@ -96,7 +96,7 @@ export class GameState {
         if (owner !== GameState.OWNER_NONE) {
             this.tileOwners[tile] = GameState.OWNER_NONE;
             playerManager.getPlayer(owner).removeTile(tile);
-            this.dispatcher.fireClearTileEvent(new ClearTileEvent(tile))
+            this.dispatcher.fireTileUpdateEvent(new TileUpdateEvent(null, tile, false))
         }
     }
 

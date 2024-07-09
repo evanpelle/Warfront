@@ -1,8 +1,6 @@
 import {random} from "../Random";
 import {gameMap, isLocalGame, startGameCycle} from "../Game";
 import {Player} from "./Player";
-import {territoryRenderingManager} from "../../renderer/manager/TerritoryRenderingManager";
-import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
 import {gameState, GameState} from "../GameState";
 
 class SpawnManager {
@@ -22,6 +20,7 @@ class SpawnManager {
 	 * @param maxPlayers The maximum number of players.
 	 */
 	init(maxPlayers: number): void {
+		this.gs = gameState
 		let radius = Math.max(5, Math.sqrt(gameMap.width * gameMap.height / maxPlayers / 1.1 / Math.sqrt(2)));
 		while (radius >= 5) {
 			this.spawnPoints = this.buildSpawns(radius);
@@ -126,8 +125,6 @@ class SpawnManager {
 		const result = target[index];
 		target.splice(index, 1);
 		this.getSpawnPixels(result).forEach(pixel => this.gs.conquer(pixel, player.id));
-		territoryRenderingManager.applyTransaction(player, player);
-		playerNameRenderingManager.applyTransaction(player, player);
 		return result;
 	}
 
@@ -153,8 +150,6 @@ class SpawnManager {
 		data.pixels.forEach(pixel => this.gs.conquer(pixel, player.id));
 		this.backupPoints.push(...data.blockedPoints);
 		this.spawnData[player.id] = data;
-		territoryRenderingManager.applyTransaction(player, player);
-		playerNameRenderingManager.applyTransaction(player, player);
 
 		if (isLocalGame) {
 			this.isSelecting = false;

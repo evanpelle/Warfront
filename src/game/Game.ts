@@ -13,6 +13,8 @@ import {HSLColor} from "../util/HSLColor";
 import {GameMode} from "./mode/GameMode";
 import {getSetting} from "../util/UserSettingManager";
 import {GameState, gameState, setGameState} from "./GameState";
+import {eventDispatcher} from "./GameEvent";
+import {territoryRenderingManager} from "../renderer/manager/TerritoryRenderingManager";
 
 /**
  * The map of the current game.
@@ -39,6 +41,8 @@ export let isLocalGame: boolean;
 export function startGame(map: GameMap, mode: GameMode) {
 	gameMap = map;
 	setGameState(new GameState(map, mode, playerManager))
+	spawnManager.init(500);
+	territoryRenderingManager.init()
 	gameMode = mode;
 	mapNavigationHandler.enable();
 	mapActionHandler.enable();
@@ -46,8 +50,8 @@ export function startGame(map: GameMap, mode: GameMode) {
 	//gameState.init();
 	playerNameRenderingManager.reset(500);
 	attackActionHandler.init(500);
-	spawnManager.init(500);
-	playerManager.init(gameState, [new Player(gameState, 0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
+	playerManager.init(gameState, [new Player(gameState, eventDispatcher, 0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
+	playerNameRenderingManager.finishRegistration(playerManager.players);
 
 	isPlaying = true;
 	isLocalGame = true;

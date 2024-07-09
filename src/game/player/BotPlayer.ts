@@ -3,10 +3,11 @@ import {random} from "../Random";
 import {attackActionHandler} from "../action/AttackActionHandler";
 import {HSLColor} from "../../util/HSLColor";
 import {GameState} from "../GameState";
+import {EventDispatcher} from "../GameEvent";
 
 export class BotPlayer extends Player {
-	constructor(gs: GameState, id: number) {
-		super(gs, id, "Bot", HSLColor.fromRGB(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), Math.floor(Math.random() * 256)));
+	constructor(gs: GameState, eventDispatcher: EventDispatcher, id: number) {
+		super(gs, eventDispatcher, id, "Bot", HSLColor.fromRGB(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), Math.floor(Math.random() * 256)));
 	}
 
 	//TODO: Implement bot logic
