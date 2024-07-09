@@ -2,11 +2,11 @@ import {Player} from "./Player";
 import {BotPlayer} from "./BotPlayer";
 import {spawnManager} from "./SpawnManager";
 import {gameTicker, GameTickListener} from "../GameTicker";
-import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
-import {gameState, GameState} from "../GameState";
+import {GameState} from "../GameState";
+import {eventDispatcher, PlayerUpdateEvent} from "../GameEvent";
 
 export class PlayerManager implements GameTickListener {
-	private players: Player[];
+	public players: Player[];
 	private bots: BotPlayer[];
 	private gs: GameState
 
@@ -31,10 +31,8 @@ export class PlayerManager implements GameTickListener {
 		}
 
 		for (let i = humans.length; i < maxPlayers; i++) {
-			this.registerPlayer(new BotPlayer(this.gs, this.players.length), true);
+			this.registerPlayer(new BotPlayer(this.gs, eventDispatcher, this.players.length), true);
 		}
-
-		playerNameRenderingManager.finishRegistration(this.players);
 	}
 
 	/**
@@ -43,7 +41,7 @@ export class PlayerManager implements GameTickListener {
 	 * @param isBot Whether the player is a bot.
 	 */
 	registerPlayer(player: Player, isBot: boolean): void {
-		playerNameRenderingManager.registerPlayer(player);
+		eventDispatcher.firePlayerUpdateEvent(new PlayerUpdateEvent(player))
 		this.players.push(player);
 		if (isBot) {
 			this.bots.push(player as BotPlayer);

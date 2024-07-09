@@ -1,11 +1,10 @@
-import {Player} from "../../game/player/Player";
 import {gameMap, isPlaying} from "../../game/Game";
 import {getSetting, registerSettingListener} from "../../util/UserSettingManager";
 import {HSLColor} from "../../util/HSLColor";
 import {territoryRenderer} from "../layer/TerritoryRenderer";
 import {playerManager} from "../../game/player/PlayerManager";
 import {GameTheme} from "../GameTheme";
-import {ClearTileEvent, eventDispatcher} from "../../game/GameEvent";
+import {eventDispatcher, TileUpdateEvent} from "../../game/GameEvent";
 import {playerNameRenderingManager} from "./PlayerNameRenderingManager";
 import {gameState, GameState} from "../../game/GameState";
 
@@ -22,6 +21,24 @@ class TerritoryRenderingManager {
 
 
 	constructor(private gs: GameState) { }
+
+	public init() {
+		this.gs = gameState
+	}
+
+	tileUpdateEvent(event: TileUpdateEvent) {
+		if (event.newOwner == null) {
+			this.clear(event.tilePos)
+			return
+		}
+		var color: HSLColor
+		if (event.isBorder) {
+			color = getSetting("theme").getBorderColor(event.newOwner.baseColor)
+		} else {
+			color = getSetting("theme").getTerritoryColor(event.newOwner.baseColor)
+		}
+		this.paintTile(event.tilePos, event.newOwner.baseColor)
+	}
 
 	/**
 	 * Add a tile to the territory update queue.
@@ -56,22 +73,6 @@ class TerritoryRenderingManager {
 	}
 
 	/**
-	 * Execute the transaction.
-	 * @param player the player to apply the transaction to
-	 * @param target the target player
-	 * @internal
-	 */
-	applyTransaction(player: Player, target: Player): void {
-		this.paintTiles(this.targetBorderQueue, getSetting("theme").getBorderColor(target.baseColor));
-		this.paintTiles(this.playerBorderQueue, getSetting("theme").getBorderColor(player.baseColor));
-		this.paintTiles(this.territoryQueue, getSetting("theme").getTerritoryColor(player.baseColor));
-
-		this.targetBorderQueue.length = 0;
-		this.playerBorderQueue.length = 0;
-		this.territoryQueue.length = 0;
-	}
-
-	/**
 	 * Paint a tile.
 	 * @param tiles the tiles to paint
 	 * @param color the color to paint the tiles
@@ -89,6 +90,13 @@ class TerritoryRenderingManager {
 				context.fillRect(tile % gameMap.width, Math.floor(tile / gameMap.width), 1, 1);
 			}
 		}
+	}
+
+	paintTile(tile: number, color: HSLColor) {
+		const context = territoryRenderer.context;
+		context.fillStyle = color.toString();
+		context.clearRect(tile % gameMap.width, Math.floor(tile / gameMap.width), 1, 1);
+		context.fillRect(tile % gameMap.width, Math.floor(tile / gameMap.width), 1, 1);
 	}
 
 	/**
@@ -116,5 +124,5 @@ class TerritoryRenderingManager {
 
 export const territoryRenderingManager = new TerritoryRenderingManager(gameState);
 
-eventDispatcher.addClearTileEventListener((event) => territoryRenderingManager.clear(event.tilePos))
+eventDispatcher.registerTileUpdateEventListener((event) => territoryRenderingManager.tileUpdateEvent(event))
 registerSettingListener("theme", territoryRenderingManager.forceRepaint);

@@ -3,8 +3,6 @@ import {PriorityQueue} from "../../util/PriorityQueue";
 import {gameMap} from "../Game";
 import {random} from "../Random";
 import {attackActionHandler} from "./AttackActionHandler";
-import {territoryRenderingManager} from "../../renderer/manager/TerritoryRenderingManager";
-import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
 import {GameState} from "../GameState";
 
 export class AttackExecutor {
@@ -75,9 +73,6 @@ export class AttackExecutor {
 			this.troops -= attackCost + gameMap.tileExpansionCosts[tile] / 50;
 			conquered++;
 		}
-
-		territoryRenderingManager.applyTransaction(this.player, this.target || this.player);
-		playerNameRenderingManager.applyTransaction(this.player, this.target || this.player);
 
 		if (this.target) this.target.removeTroops(conquered * defenseCost);
 

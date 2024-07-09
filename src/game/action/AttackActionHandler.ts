@@ -19,6 +19,7 @@ class AttackActionHandler implements GameTickListener {
 	}
 
 	init(maxPlayers: number): void {
+		this.gs = gameState
 		this.attacks = [];
 		this.playerIndex = new Array(maxPlayers).fill(null).map(() => new Array(maxPlayers).fill(null));
 		this.playerAttackList = new Array(maxPlayers).fill(null).map(() => []);

@@ -1,9 +1,8 @@
-import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
 import {attackActionHandler} from "../action/AttackActionHandler";
 import {HSLColor} from "../../util/HSLColor";
-import {territoryRenderingManager} from "../../renderer/manager/TerritoryRenderingManager";
 import {gameMode} from "../Game";
 import {GameState} from "../GameState";
+import {EventDispatcher, TileUpdateEvent} from "../GameEvent";
 
 export class Player {
 	readonly id: number;
@@ -14,7 +13,7 @@ export class Player {
 	private territorySize: number = 0;
 	private alive: boolean = true;
 
-	constructor(protected gs: GameState, id: number, name: string, baseColor: HSLColor) {
+	constructor(protected gs: GameState, private eventDispatcher: EventDispatcher, id: number, name: string, baseColor: HSLColor) {
 		this.id = id;
 		this.name = name;
 		this.baseColor = gameMode.processPlayerColor(id, baseColor);
@@ -30,18 +29,12 @@ export class Player {
 		this.territorySize++;
 		if (this.gs.isBorder(tile)) {
 			this.borderTiles.add(tile);
-			territoryRenderingManager.setPlayerBorder(tile);
-		} else {
-			playerNameRenderingManager.addTile(tile);
-			territoryRenderingManager.setTerritory(tile);
 		}
+		this.eventDispatcher.fireTileUpdateEvent(new TileUpdateEvent(this, tile, this.gs.isBorder(tile)))
 		this.gs.onNeighbors(tile, neighbor => {
 			if (this.gs.isOwner(neighbor, this.id) && !this.gs.isBorder(neighbor) && this.borderTiles.delete(neighbor)) {
-				territoryRenderingManager.setTerritory(neighbor);
-				playerNameRenderingManager.addTile(neighbor);
 			}
 		});
-
 		attackActionHandler.handleTerritoryAdd(tile, this.id);
 	}
 
@@ -53,14 +46,13 @@ export class Player {
 	 */
 	removeTile(tile: number): void {
 		this.territorySize--;
-		if (!this.borderTiles.delete(tile)) {
-			playerNameRenderingManager.removeTile(tile);
-		}
+		var isborder = this.borderTiles.delete(tile)
+		this.eventDispatcher.fireTileUpdateEvent(new TileUpdateEvent(this, tile, isborder, true))
+
 		this.gs.onNeighbors(tile, neighbor => {
 			if (this.gs.isOwner(neighbor, this.id) && !this.borderTiles.has(neighbor)) {
 				this.borderTiles.add(neighbor);
-				territoryRenderingManager.setTargetBorder(neighbor);
-				playerNameRenderingManager.removeTile(neighbor);
+				this.eventDispatcher.fireTileUpdateEvent(new TileUpdateEvent(this, tile, isborder))
 			}
 		});
 

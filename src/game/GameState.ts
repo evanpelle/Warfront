@@ -1,6 +1,5 @@
 import {GameMap} from "../map/GameMap"
-import {mapFromId} from "../map/MapRegistry";
-import {ClearTileEvent, EventDispatcher} from "./GameEvent";
+import {TileUpdateEvent, EventDispatcher} from "./GameEvent";
 import {FFAGameMode} from "./mode/FFAGameMode";
 import {GameMode} from "./mode/GameMode"
 import {playerManager, PlayerManager} from "./player/PlayerManager"
@@ -18,7 +17,6 @@ export class GameState {
         this.map = map
         this.mode = mode
         this.players = players
-        this.init()
     }
 
     init() {
@@ -98,7 +96,7 @@ export class GameState {
         if (owner !== GameState.OWNER_NONE) {
             this.tileOwners[tile] = GameState.OWNER_NONE;
             playerManager.getPlayer(owner).removeTile(tile);
-            this.dispatcher.fireClearTileEvent(new ClearTileEvent(tile))
+            this.dispatcher.fireTileUpdateEvent(new TileUpdateEvent(null, tile, false))
         }
     }
 
@@ -135,4 +133,9 @@ export class GameState {
     }
 }
 
-export const gameState = new GameState(mapFromId(Math.floor(Math.random() * 2)), new FFAGameMode(), null)
+export var gameState: GameState = null
+
+export function setGameState(gs: GameState) {
+    gameState = gs
+    gameState.init()
+}

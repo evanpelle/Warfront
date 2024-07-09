@@ -7,6 +7,7 @@ import {random} from "../../game/Random";
 import {gameTicker} from "../../game/GameTicker";
 import {mapNavigationHandler} from "../../game/action/MapNavigationHandler";
 import {gameState, GameState} from "../../game/GameState";
+import {eventDispatcher, PlayerUpdateEvent, TileUpdateEvent} from "../../game/GameEvent";
 
 class PlayerNameRenderingManager {
 	playerData: PlayerNameRenderingData[] = [];
@@ -15,18 +16,11 @@ class PlayerNameRenderingManager {
 	readonly partialElementAtlas: HTMLCanvasElement = document.createElement("canvas")
 	partialAtlasContext: CanvasRenderingContext2D;
 
-	/**
-	 * Data for the current transaction.
-	 * TODO: Move this somewhere else, maybe a proper transaction implementation...
-	 */
-	private currentPlayerMax: number = 0;
-	private currentPlayerPos: number = 0;
-	private currentTargetMax: number = 0;
-	private currentTargetPos: number = 0;
 
 	constructor(private gs: GameState) { }
 
 	reset(maxPlayers: number) {
+		this.gs = gameState
 		this.playerData = [];
 		this.nameDepth = new Uint16Array(gameMap.width * gameMap.height);
 		this.atlasRowLength = Math.sqrt(maxPlayers) | 0;
@@ -36,6 +30,20 @@ class PlayerNameRenderingManager {
 		this.partialAtlasContext.textRendering = "optimizeSpeed";
 		this.partialAtlasContext.textAlign = "center";
 		this.partialAtlasContext.textBaseline = "bottom";
+	}
+
+	tileUpdateEvent(event: TileUpdateEvent) {
+		if (event.newOwner != null) {
+			this.gs.onNeighbors(event.tilePos, neighbor => {
+				if (this.gs.isOwner(neighbor, event.newOwner.id) && !this.gs.isBorder(neighbor)) {
+					this.addTile(event.tilePos)
+				}
+			});
+		}
+	}
+
+	playerUpdateEvent(event: PlayerUpdateEvent) {
+		playerNameRenderingManager.registerPlayer(event.newPlayer);
 	}
 
 	/**
@@ -88,10 +96,6 @@ class PlayerNameRenderingManager {
 		let offset = 0;
 		let rowMax = Infinity;
 		let columnMax = Infinity;
-		if (this.currentTargetMax < this.nameDepth[tile - gameMap.width - 1]) {
-			this.currentTargetMax = this.nameDepth[tile - gameMap.width - 1];
-			this.currentTargetPos = tile - gameMap.width - 1;
-		}
 		let changed: boolean;
 		do {
 			changed = false;
@@ -115,21 +119,6 @@ class PlayerNameRenderingManager {
 			tile++;
 			offset++;
 		} while (changed);
-	}
-
-	/**
-	 * Execute the transaction.
-	 * @param player the player to apply the transaction to
-	 * @param target the target player
-	 * @internal
-	 */
-	applyTransaction(player: Player, target: Player): void {
-		if (this.currentPlayerMax !== 0) this.playerData[player.id].handleAdd(this.currentPlayerMax, this.currentPlayerPos);
-		if (this.currentTargetMax !== 0) this.playerData[target.id].handleRemove(this.nameDepth, this.currentTargetMax, this.currentTargetPos);
-		this.currentPlayerMax = 0;
-		this.currentPlayerPos = 0;
-		this.currentTargetMax = 0;
-		this.currentTargetPos = 0;
 	}
 
 	/**
@@ -180,11 +169,6 @@ class PlayerNameRenderingManager {
 				currentOrigin += gameMap.width;
 			}
 			[currentMax, otherMax] = [otherMax, currentMax];
-		}
-
-		if (max > this.currentPlayerMax) {
-			this.currentPlayerMax = max;
-			this.currentPlayerPos = maxPos;
 		}
 	}
 }
@@ -300,3 +284,5 @@ export class PlayerNameRenderingData {
 }
 
 export const playerNameRenderingManager = new PlayerNameRenderingManager(gameState);
+eventDispatcher.registerTileUpdateEventListener((event) => playerNameRenderingManager.tileUpdateEvent(event))
+eventDispatcher.registerPlayerUpdateEventListener((event) => playerNameRenderingManager.playerUpdateEvent(event))

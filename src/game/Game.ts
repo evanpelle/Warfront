@@ -12,7 +12,9 @@ import {attackActionHandler} from "./action/AttackActionHandler";
 import {HSLColor} from "../util/HSLColor";
 import {GameMode} from "./mode/GameMode";
 import {getSetting} from "../util/UserSettingManager";
-import {gameState} from "./GameState";
+import {GameState, gameState, setGameState} from "./GameState";
+import {eventDispatcher} from "./GameEvent";
+import {territoryRenderingManager} from "../renderer/manager/TerritoryRenderingManager";
 
 /**
  * The map of the current game.
@@ -31,19 +33,6 @@ export let isPlaying: boolean;
  */
 export let isLocalGame: boolean;
 
-class GameState {
-	public map: GameMap
-	public mode: GameMode
-	public players: PlayerManager
-
-	constructor(map: GameMap, mode: GameMode, players: PlayerManager) {
-		this.map = map
-		this.mode = mode
-		this.players = players
-	}
-
-}
-
 /**
  * Start a new game with the given map.
  * @param map The map to start the game with.
@@ -51,6 +40,9 @@ class GameState {
  */
 export function startGame(map: GameMap, mode: GameMode) {
 	gameMap = map;
+	setGameState(new GameState(map, mode, playerManager))
+	spawnManager.init(500);
+	territoryRenderingManager.init()
 	gameMode = mode;
 	mapNavigationHandler.enable();
 	mapActionHandler.enable();
@@ -58,8 +50,8 @@ export function startGame(map: GameMap, mode: GameMode) {
 	//gameState.init();
 	playerNameRenderingManager.reset(500);
 	attackActionHandler.init(500);
-	spawnManager.init(500);
-	playerManager.init(gameState, [new Player(gameState, 0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
+	playerManager.init(gameState, [new Player(gameState, eventDispatcher, 0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
+	playerNameRenderingManager.finishRegistration(playerManager.players);
 
 	isPlaying = true;
 	isLocalGame = true;
