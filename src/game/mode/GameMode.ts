@@ -1,5 +1,5 @@
-import {territoryManager} from "../../map/TerritoryManager";
 import {HSLColor} from "../../util/HSLColor";
+import {GameState} from "../GameState";
 
 /**
  * All game mode-specific logic should be implemented in a subclass of this class.
@@ -13,7 +13,7 @@ export abstract class GameMode {
 	 * @returns true if the player can attack the target, false otherwise.
 	 */
 	canAttack(player: number, target: number): boolean {
-		return player !== target && target !== territoryManager.OWNER_NONE - 1;
+		return player !== target && target !== GameState.OWNER_NONE - 1;
 	}
 
 	/**

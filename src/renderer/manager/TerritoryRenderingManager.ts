@@ -4,10 +4,10 @@ import {getSetting, registerSettingListener} from "../../util/UserSettingManager
 import {HSLColor} from "../../util/HSLColor";
 import {territoryRenderer} from "../layer/TerritoryRenderer";
 import {playerManager} from "../../game/player/PlayerManager";
-import {territoryManager} from "../../map/TerritoryManager";
 import {GameTheme} from "../GameTheme";
 import {ClearTileEvent, eventDispatcher} from "../../game/GameEvent";
 import {playerNameRenderingManager} from "./PlayerNameRenderingManager";
+import {gameState, GameState} from "../../game/GameState";
 
 /**
  * When a player claims a tile, three types of updates are required:
@@ -19,6 +19,9 @@ class TerritoryRenderingManager {
 	private readonly territoryQueue: Array<number> = [];
 	private readonly playerBorderQueue: Array<number> = [];
 	private readonly targetBorderQueue: Array<number> = [];
+
+
+	constructor(private gs: GameState) { }
 
 	/**
 	 * Add a tile to the territory update queue.
@@ -96,8 +99,8 @@ class TerritoryRenderingManager {
 		territoryRenderer.context.clearRect(0, 0, gameMap.width, gameMap.height);
 		const colorCache: string[] = [];
 		for (let i = 0; i < gameMap.width * gameMap.height; i++) {
-			const owner = territoryManager.getOwner(i);
-			if (owner !== territoryManager.OWNER_NONE && owner !== territoryManager.OWNER_NONE - 1) {
+			const owner = this.gs.getOwner(i);
+			if (owner !== GameState.OWNER_NONE && owner !== GameState.OWNER_NONE - 1) {
 				const player = playerManager.getPlayer(owner);
 				const isTerritory = playerNameRenderingManager.isConsidered(i);
 				const index = (owner << 1) + (isTerritory ? 1 : 0);
@@ -111,7 +114,7 @@ class TerritoryRenderingManager {
 	}
 }
 
-export const territoryRenderingManager = new TerritoryRenderingManager();
+export const territoryRenderingManager = new TerritoryRenderingManager(gameState);
 
 eventDispatcher.addClearTileEventListener((event) => territoryRenderingManager.clear(event.tilePos))
 registerSettingListener("theme", territoryRenderingManager.forceRepaint);

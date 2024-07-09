@@ -1,9 +1,9 @@
-import { ClickEventListener, interactionManager } from "../../event/InteractionManager";
-import { mapNavigationHandler } from "./MapNavigationHandler";
-import { clientPlayer } from "../player/PlayerManager";
-import { spawnManager } from "../player/SpawnManager";
-import { attackActionHandler } from "./AttackActionHandler";
-import { territoryManager } from "../../map/TerritoryManager";
+import {ClickEventListener, interactionManager} from "../../event/InteractionManager";
+import {mapNavigationHandler} from "./MapNavigationHandler";
+import {clientPlayer} from "../player/PlayerManager";
+import {spawnManager} from "../player/SpawnManager";
+import {attackActionHandler} from "./AttackActionHandler";
+import {gameState, GameState} from "../GameState";
 
 /**
  * Default map click action handler.
@@ -12,11 +12,12 @@ import { territoryManager } from "../../map/TerritoryManager";
 class MapActionHandler implements ClickEventListener {
 	private action: (tile: number) => void;
 
+	constructor(private gs: GameState) { }
 	/**
 	 * Enables the map action handler.
 	 */
 	enable() {
-		this.setAction(tile => spawnManager.isSelecting ? spawnManager.selectSpawnPoint(clientPlayer, tile) : attackActionHandler.preprocessAttack(clientPlayer.id, territoryManager.getOwner(tile), 0.2));
+		this.setAction(tile => spawnManager.isSelecting ? spawnManager.selectSpawnPoint(clientPlayer, tile) : attackActionHandler.preprocessAttack(clientPlayer.id, this.gs.getOwner(tile), 0.2));
 		interactionManager.click.register(this);
 	}
 
@@ -44,4 +45,4 @@ class MapActionHandler implements ClickEventListener {
 	}
 }
 
-export const mapActionHandler = new MapActionHandler();
+export const mapActionHandler = new MapActionHandler(gameState);

@@ -1,11 +1,11 @@
 import {Player} from "../player/Player";
 import {PriorityQueue} from "../../util/PriorityQueue";
-import {territoryManager} from "../../map/TerritoryManager";
 import {gameMap} from "../Game";
 import {random} from "../Random";
 import {attackActionHandler} from "./AttackActionHandler";
 import {territoryRenderingManager} from "../../renderer/manager/TerritoryRenderingManager";
 import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
+import {GameState} from "../GameState";
 
 export class AttackExecutor {
 	readonly player: Player;
@@ -20,7 +20,7 @@ export class AttackExecutor {
 	 * @param target The player that is being attacked, or null if the target is unclaimed territory.
 	 * @param troops The amount of troops that are attacking.
 	 */
-	constructor(player: Player, target: Player | null, troops: number) {
+	constructor(private gs: GameState, player: Player, target: Player | null, troops: number) {
 		this.player = player;
 		this.target = target;
 		this.troops = troops;
@@ -68,9 +68,9 @@ export class AttackExecutor {
 		let conquered = 0;
 		while (this.troops >= attackCost && !this.tileQueue.isEmpty() && this.tileQueue.peek()[0] < this.basePriority) {
 			const [_, tile] = this.tileQueue.pop();
-			if (!territoryManager.isOwner(tile, this.target ? this.target.id : territoryManager.OWNER_NONE)) continue;
-			if (!territoryManager.bordersTile(tile, this.player.id)) continue;
-			territoryManager.conquer(tile, this.player.id);
+			if (!this.gs.isOwner(tile, this.target ? this.target.id : GameState.OWNER_NONE)) continue;
+			if (!this.gs.bordersTile(tile, this.player.id)) continue;
+			this.gs.conquer(tile, this.player.id);
 
 			this.troops -= attackCost + gameMap.tileExpansionCosts[tile] / 50;
 			conquered++;
@@ -93,8 +93,8 @@ export class AttackExecutor {
 	 * @param tile The tile that was added.
 	 */
 	handlePlayerTileAdd(tile: number) {
-		territoryManager.onNeighbors(tile, neighbor => {
-			if (territoryManager.isOwner(neighbor, this.target ? this.target.id : territoryManager.OWNER_NONE)) {
+		this.gs.onNeighbors(tile, neighbor => {
+			if (this.gs.isOwner(neighbor, this.target ? this.target.id : GameState.OWNER_NONE)) {
 				this.tileQueue.push([this.basePriority + gameMap.tileExpansionTimes[tile] * (0.025 + random.next() * 0.06), neighbor]);
 			}
 		});
@@ -106,7 +106,7 @@ export class AttackExecutor {
 	 * @param tile The tile that was added.
 	 */
 	handleTargetTileAdd(tile: number) {
-		if (territoryManager.bordersTile(tile, this.player.id)) {
+		if (this.gs.bordersTile(tile, this.player.id)) {
 			this.tileQueue.push([this.basePriority + gameMap.tileExpansionTimes[tile] * (0.025 + random.next() * 0.06), tile]);
 		}
 	}
@@ -116,8 +116,8 @@ export class AttackExecutor {
 	 * @private
 	 */
 	private orderTiles(): void {
-		const tileOwners = territoryManager.tileOwners;
-		const target = this.target ? this.target.id : territoryManager.OWNER_NONE;
+		const tileOwners = this.gs.tileOwners;
+		const target = this.target ? this.target.id : GameState.OWNER_NONE;
 
 		const result = [];
 		const amountCache = attackActionHandler.amountCache;
