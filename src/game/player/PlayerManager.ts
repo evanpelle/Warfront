@@ -3,10 +3,12 @@ import {BotPlayer} from "./BotPlayer";
 import {spawnManager} from "./SpawnManager";
 import {gameTicker, GameTickListener} from "../GameTicker";
 import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
+import {gameState, GameState} from "../GameState";
 
 export class PlayerManager implements GameTickListener {
 	private players: Player[];
 	private bots: BotPlayer[];
+	private gs: GameState
 
 	constructor() {
 		gameTicker.registry.register(this);
@@ -18,7 +20,8 @@ export class PlayerManager implements GameTickListener {
 	 * @param clientId Player ID of the client player (the player that is controlled this client).
 	 * @param maxPlayers The maximum number of players.
 	 */
-	init(humans: Player[], clientId: number, maxPlayers: number): void {
+	init(gs: GameState, humans: Player[], clientId: number, maxPlayers: number): void {
+		this.gs = gs
 		this.players = [];
 		this.bots = [];
 
@@ -28,7 +31,7 @@ export class PlayerManager implements GameTickListener {
 		}
 
 		for (let i = humans.length; i < maxPlayers; i++) {
-			this.registerPlayer(new BotPlayer(this.players.length), true);
+			this.registerPlayer(new BotPlayer(this.gs, this.players.length), true);
 		}
 
 		playerNameRenderingManager.finishRegistration(this.players);

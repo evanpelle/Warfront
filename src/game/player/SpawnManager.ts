@@ -1,15 +1,17 @@
-import { random } from "../Random";
-import { gameMap, isLocalGame, startGameCycle } from "../Game";
-import { territoryManager } from "../../map/TerritoryManager";
-import { Player } from "./Player";
-import { territoryRenderingManager } from "../../renderer/manager/TerritoryRenderingManager";
-import { playerNameRenderingManager } from "../../renderer/manager/PlayerNameRenderingManager";
+import {random} from "../Random";
+import {gameMap, isLocalGame, startGameCycle} from "../Game";
+import {Player} from "./Player";
+import {territoryRenderingManager} from "../../renderer/manager/TerritoryRenderingManager";
+import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
+import {gameState, GameState} from "../GameState";
 
 class SpawnManager {
 	spawnPoints: number[];
 	spawnData: SpawnData[];
 	backupPoints: number[];
 	isSelecting: boolean;
+
+	constructor(private gs: GameState) { }
 
 	/**
 	 * Initialize the spawn manager with the given maximum number of players.
@@ -123,7 +125,7 @@ class SpawnManager {
 		const index = random.nextInt(target.length);
 		const result = target[index];
 		target.splice(index, 1);
-		this.getSpawnPixels(result).forEach(pixel => territoryManager.conquer(pixel, player.id));
+		this.getSpawnPixels(result).forEach(pixel => this.gs.conquer(pixel, player.id));
 		territoryRenderingManager.applyTransaction(player, player);
 		playerNameRenderingManager.applyTransaction(player, player);
 		return result;
@@ -138,7 +140,7 @@ class SpawnManager {
 	 */
 	selectSpawnPoint(player: Player, tile: number): void {
 		if (this.spawnData[player.id]) {
-			this.spawnData[player.id].pixels.forEach(pixel => territoryManager.clear(pixel));
+			this.spawnData[player.id].pixels.forEach(pixel => this.gs.clear(pixel));
 			this.spawnPoints.push(...this.spawnData[player.id].blockedPoints);
 			this.spawnData[player.id].blockedPoints.forEach(point => this.backupPoints.splice(this.backupPoints.indexOf(point), 1));
 		}
@@ -148,7 +150,7 @@ class SpawnManager {
 		data.blockedPoints = this.spawnPoints.filter(point => Math.abs(point % gameMap.width - tile % gameMap.width) <= 4 && Math.abs(Math.floor(point / gameMap.width) - Math.floor(tile / gameMap.width)) <= 4);
 		data.pixels = this.getSpawnPixels(tile);
 		data.blockedPoints.forEach(point => this.spawnPoints.splice(this.spawnPoints.indexOf(point), 1));
-		data.pixels.forEach(pixel => territoryManager.conquer(pixel, player.id));
+		data.pixels.forEach(pixel => this.gs.conquer(pixel, player.id));
 		this.backupPoints.push(...data.blockedPoints);
 		this.spawnData[player.id] = data;
 		territoryRenderingManager.applyTransaction(player, player);
@@ -177,7 +179,7 @@ class SpawnManager {
 				if (index < 0 || index >= gameMap.width * gameMap.height) {
 					continue;
 				}
-				if (gameMap.getTile(index).isSolid && !territoryManager.hasOwner(index)) {
+				if (gameMap.getTile(index).isSolid && !this.gs.hasOwner(index)) {
 					result.push(index);
 				}
 			}
@@ -191,4 +193,4 @@ class SpawnData {
 	pixels: number[];
 }
 
-export const spawnManager = new SpawnManager();
+export const spawnManager = new SpawnManager(gameState);

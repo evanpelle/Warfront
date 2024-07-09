@@ -1,7 +1,6 @@
 import {GameMap} from "../map/GameMap";
 import {gameRenderer} from "../Loader";
 import {mapNavigationHandler} from "./action/MapNavigationHandler";
-import {territoryManager} from "../map/TerritoryManager";
 import {PlayerManager, playerManager} from "./player/PlayerManager";
 import {Player} from "./player/Player";
 import {mapActionHandler} from "./action/MapActionHandler";
@@ -13,6 +12,7 @@ import {attackActionHandler} from "./action/AttackActionHandler";
 import {HSLColor} from "../util/HSLColor";
 import {GameMode} from "./mode/GameMode";
 import {getSetting} from "../util/UserSettingManager";
+import {gameState} from "./GameState";
 
 /**
  * The map of the current game.
@@ -52,15 +52,14 @@ class GameState {
 export function startGame(map: GameMap, mode: GameMode) {
 	gameMap = map;
 	gameMode = mode;
-	var gs = new GameState(map, mode, playerManager)
 	mapNavigationHandler.enable();
 	mapActionHandler.enable();
 	gameRenderer.initGameplayLayers();
-	territoryManager.init();
+	//gameState.init();
 	playerNameRenderingManager.reset(500);
 	attackActionHandler.init(500);
 	spawnManager.init(500);
-	playerManager.init([new Player(0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
+	playerManager.init(gameState, [new Player(gameState, 0, getSetting("playerName") ?? "UnknownPlayer", HSLColor.fromRGB(0, 200, 200))], 0, 500);
 
 	isPlaying = true;
 	isLocalGame = true;

@@ -1,11 +1,13 @@
 import {GameMap} from "../map/GameMap"
+import {mapFromId} from "../map/MapRegistry";
 import {ClearTileEvent, EventDispatcher} from "./GameEvent";
+import {FFAGameMode} from "./mode/FFAGameMode";
 import {GameMode} from "./mode/GameMode"
-import {PlayerManager} from "./player/PlayerManager"
+import {playerManager, PlayerManager} from "./player/PlayerManager"
 
 export class GameState {
     tileOwners: Uint16Array;
-    readonly OWNER_NONE = 65535;
+    public static readonly OWNER_NONE = 65535;
     private dispatcher: EventDispatcher
 
     public map: GameMap
@@ -16,6 +18,14 @@ export class GameState {
         this.map = map
         this.mode = mode
         this.players = players
+        this.init()
+    }
+
+    init() {
+        this.tileOwners = new Uint16Array(this.map.width * this.map.height);
+        for (let i = 0; i < this.tileOwners.length; i++) {
+            this.tileOwners[i] = this.map.getTile(i).isSolid ? GameState.OWNER_NONE : GameState.OWNER_NONE - 1;
+        }
     }
 
     /**
@@ -41,7 +51,7 @@ export class GameState {
      * @returns True if the tile has an owner, false otherwise.
      */
     hasOwner(tile: number): boolean {
-        return this.tileOwners[tile] !== this.OWNER_NONE;
+        return this.tileOwners[tile] !== GameState.OWNER_NONE;
     }
 
     /**
@@ -74,23 +84,55 @@ export class GameState {
     conquer(tile: number, owner: number): void {
         const previousOwner = this.tileOwners[tile];
         this.tileOwners[tile] = owner;
-        if (previousOwner !== this.OWNER_NONE) {
-            this.players.getPlayer(previousOwner).removeTile(tile);
+        if (previousOwner !== GameState.OWNER_NONE) {
+            playerManager.getPlayer(previousOwner).removeTile(tile);
         }
-        this.players.getPlayer(owner).addTile(tile);
+        playerManager.getPlayer(owner).addTile(tile);
     }
 
     /**
      * Clears a tile.
-     * @see TerritoryManager.conquer
-     * @param tile The tile to clear.
      */
     clear(tile: number): void {
         const owner = this.tileOwners[tile];
-        if (owner !== this.OWNER_NONE) {
-            this.tileOwners[tile] = this.OWNER_NONE;
-            this.players.getPlayer(owner).removeTile(tile);
+        if (owner !== GameState.OWNER_NONE) {
+            this.tileOwners[tile] = GameState.OWNER_NONE;
+            playerManager.getPlayer(owner).removeTile(tile);
             this.dispatcher.fireClearTileEvent(new ClearTileEvent(tile))
         }
     }
+
+    onNeighbors(tile: number, closure: (tile: number) => void): void {
+        let x = tile % this.map.width;
+        let y = Math.floor(tile / this.map.width);
+        if (x > 0) {
+            closure(tile - 1);
+        }
+        if (x < this.map.width - 1) {
+            closure(tile + 1);
+        }
+        if (y > 0) {
+            closure(tile - this.map.width);
+        }
+        if (y < this.map.height - 1) {
+            closure(tile + this.map.width);
+        }
+    }
+
+    /**
+     * Check if a tile borders a tile owned by a player.
+     * @param tile The tile to check.
+     * @param player The player to check for.
+     * @returns True if the tile borders a tile owned by the player, false otherwise.
+     */
+    bordersTile(tile: number, player: number): boolean {
+        let x = tile % this.map.width;
+        let y = Math.floor(tile / this.map.width);
+        return (x > 0 && this.isOwner(tile - 1, player)) ||
+            (x < this.map.width - 1 && this.isOwner(tile + 1, player)) ||
+            (y > 0 && this.isOwner(tile - this.map.width, player)) ||
+            (y < this.map.height - 1 && this.isOwner(tile + this.map.width, player));
+    }
 }
+
+export const gameState = new GameState(mapFromId(Math.floor(Math.random() * 2)), new FFAGameMode(), null)

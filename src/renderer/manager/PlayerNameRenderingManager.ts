@@ -1,12 +1,12 @@
-import { Player } from "../../game/player/Player";
-import { gameMap } from "../../game/Game";
-import { formatTroops } from "../../util/StringFormatter";
-import { PriorityQueue } from "../../util/PriorityQueue";
-import { territoryManager } from "../../map/TerritoryManager";
-import { getSetting } from "../../util/UserSettingManager";
-import { random } from "../../game/Random";
-import { gameTicker } from "../../game/GameTicker";
-import { mapNavigationHandler } from "../../game/action/MapNavigationHandler";
+import {Player} from "../../game/player/Player";
+import {gameMap} from "../../game/Game";
+import {formatTroops} from "../../util/StringFormatter";
+import {PriorityQueue} from "../../util/PriorityQueue";
+import {getSetting} from "../../util/UserSettingManager";
+import {random} from "../../game/Random";
+import {gameTicker} from "../../game/GameTicker";
+import {mapNavigationHandler} from "../../game/action/MapNavigationHandler";
+import {gameState, GameState} from "../../game/GameState";
 
 class PlayerNameRenderingManager {
 	playerData: PlayerNameRenderingData[] = [];
@@ -23,6 +23,8 @@ class PlayerNameRenderingManager {
 	private currentPlayerPos: number = 0;
 	private currentTargetMax: number = 0;
 	private currentTargetPos: number = 0;
+
+	constructor(private gs: GameState) { }
 
 	reset(maxPlayers: number) {
 		this.playerData = [];
@@ -44,7 +46,7 @@ class PlayerNameRenderingManager {
 		const canvas = document.createElement("canvas");
 		const context = canvas.getContext("2d");
 		const troopLength = context.measureText("123.").width / 10;
-		this.playerData[player.id] = new PlayerNameRenderingData(player.name, troopLength, player.borderTiles, player.id);
+		this.playerData[player.id] = new PlayerNameRenderingData(this.gs, player.name, troopLength, player.borderTiles, player.id);
 	}
 
 	//TODO: Remove this hacky solution, just pass the player instance to the rendering manager
@@ -201,7 +203,7 @@ export class PlayerNameRenderingData {
 	private readonly borderSet: Set<number>;
 	readonly queue: PriorityQueue<[number, number]> = new PriorityQueue((a, b) => a[0] > b[0]);
 
-	constructor(name: string, troopLength: number, borderSet: Set<number>, id: number) {
+	constructor(private gs: GameState, name: string, troopLength: number, borderSet: Set<number>, id: number) {
 		this.troopLength = troopLength;
 		this.borderSet = borderSet;
 		this.id = id;
@@ -246,7 +248,7 @@ export class PlayerNameRenderingData {
 		this.queue.push([nameDepth[this.index], this.index]);
 		while (!this.queue.isEmpty()) {
 			const [newMax, newPos] = this.queue.pop();
-			if (territoryManager.tileOwners[newPos] === this.id) {
+			if (this.gs.tileOwners[newPos] === this.id) {
 				const size = nameDepth[newPos];
 				if (size >= newMax) {
 					this.setPosAt(newPos, size);
@@ -297,4 +299,4 @@ export class PlayerNameRenderingData {
 	}
 }
 
-export const playerNameRenderingManager = new PlayerNameRenderingManager();
+export const playerNameRenderingManager = new PlayerNameRenderingManager(gameState);

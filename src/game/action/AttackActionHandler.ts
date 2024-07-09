@@ -1,9 +1,9 @@
-import { playerManager } from "../player/PlayerManager";
-import { gameTicker, GameTickListener } from "../GameTicker";
-import { territoryManager } from "../../map/TerritoryManager";
-import { Player } from "../player/Player";
-import { AttackExecutor } from "./AttackExecutor";
-import { gameMap, gameMode } from "../Game";
+import {playerManager} from "../player/PlayerManager";
+import {gameTicker, GameTickListener} from "../GameTicker";
+import {Player} from "../player/Player";
+import {AttackExecutor} from "./AttackExecutor";
+import {gameMap, gameMode} from "../Game";
+import {gameState, GameState} from "../GameState";
 
 class AttackActionHandler implements GameTickListener {
 	private attacks: AttackExecutor[] = [];
@@ -14,7 +14,7 @@ class AttackActionHandler implements GameTickListener {
 	private unclaimedAttackList: AttackExecutor[] = [];
 	amountCache: Uint8Array;
 
-	constructor() {
+	constructor(private gs: GameState) {
 		gameTicker.registry.register(this);
 	}
 
@@ -36,7 +36,7 @@ class AttackActionHandler implements GameTickListener {
 		let troopCount = Math.floor(playerManager.getPlayer(player).getTroops() * percentage);
 		playerManager.getPlayer(player).removeTroops(troopCount);
 
-		if (target === territoryManager.OWNER_NONE) {
+		if (target === GameState.OWNER_NONE) {
 			this.attackUnclaimed(playerManager.getPlayer(player), troopCount);
 			return;
 		}
@@ -99,7 +99,7 @@ class AttackActionHandler implements GameTickListener {
 	 * @private
 	 */
 	private addUnclaimed(player: Player, troops: number): void {
-		const attack = new AttackExecutor(player, null, troops);
+		const attack = new AttackExecutor(this.gs, player, null, troops);
 		this.attacks.push(attack);
 		this.unclaimedIndex[player.id] = attack;
 		this.playerAttackList[player.id].push(attack);
@@ -114,7 +114,7 @@ class AttackActionHandler implements GameTickListener {
 	 * @private
 	 */
 	private addAttack(player: Player, target: Player, troops: number): void {
-		const attack = new AttackExecutor(player, target, troops);
+		const attack = new AttackExecutor(this.gs, player, target, troops);
 		this.attacks.push(attack);
 		this.playerIndex[player.id][target.id] = attack;
 		this.playerAttackList[player.id].push(attack);
@@ -169,4 +169,4 @@ class AttackActionHandler implements GameTickListener {
 	}
 }
 
-export const attackActionHandler = new AttackActionHandler();
+export const attackActionHandler = new AttackActionHandler(gameState);
