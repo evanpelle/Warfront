@@ -12,7 +12,7 @@ import {attackActionHandler} from "./action/AttackActionHandler";
 import {HSLColor} from "../util/HSLColor";
 import {GameMode} from "./mode/GameMode";
 import {getSetting} from "../util/UserSettingManager";
-import {gameState} from "./GameState";
+import {GameState, gameState, setGameState} from "./GameState";
 
 /**
  * The map of the current game.
@@ -31,19 +31,6 @@ export let isPlaying: boolean;
  */
 export let isLocalGame: boolean;
 
-class GameState {
-	public map: GameMap
-	public mode: GameMode
-	public players: PlayerManager
-
-	constructor(map: GameMap, mode: GameMode, players: PlayerManager) {
-		this.map = map
-		this.mode = mode
-		this.players = players
-	}
-
-}
-
 /**
  * Start a new game with the given map.
  * @param map The map to start the game with.
@@ -51,6 +38,7 @@ class GameState {
  */
 export function startGame(map: GameMap, mode: GameMode) {
 	gameMap = map;
+	setGameState(new GameState(map, mode, playerManager))
 	gameMode = mode;
 	mapNavigationHandler.enable();
 	mapActionHandler.enable();
