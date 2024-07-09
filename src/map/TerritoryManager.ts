@@ -1,8 +1,6 @@
-import { gameMap } from "../game/Game";
-import { playerManager } from "../game/player/PlayerManager";
-import { territoryRenderingManager } from "../renderer/manager/TerritoryRenderingManager";
-import { playerNameRenderingManager } from "../renderer/manager/PlayerNameRenderingManager";
-import { ClearTileEvent, eventDispatcher, EventDispatcher } from "../game/GameEvent";
+import {gameMap} from "../game/Game";
+import {playerManager} from "../game/player/PlayerManager";
+import {ClearTileEvent, eventDispatcher, EventDispatcher} from "../game/GameEvent";
 
 class TerritoryManager {
 	tileOwners: Uint16Array;
@@ -13,12 +11,7 @@ class TerritoryManager {
 		this.dispatcher = dispatcher
 	}
 
-	/**
-	 * Resets the territory manager.
-	 * Should only be called when a new game is started.
-	 * @internal
-	 */
-	reset(): void {
+	init() {
 		this.tileOwners = new Uint16Array(gameMap.width * gameMap.height);
 		for (let i = 0; i < this.tileOwners.length; i++) {
 			this.tileOwners[i] = gameMap.getTile(i).isSolid ? this.OWNER_NONE : this.OWNER_NONE - 1;
@@ -71,15 +64,6 @@ class TerritoryManager {
 	}
 
 	/**
-	 * Checks if a tile is part of a player's territory excluding the player's border.
-	 * @param tile The tile to check.
-	 * @returns True if the tile is part of a player's territory, false otherwise.
-	 */
-	isTerritory(tile: number): boolean {
-		return playerNameRenderingManager.isConsidered(tile);
-	}
-
-	/**
 	 * Conquers a tile for a player.
 	 *
 	 * If the tile is already owned by a player, the player will lose the tile.
@@ -108,6 +92,38 @@ class TerritoryManager {
 			playerManager.getPlayer(owner).removeTile(tile);
 			this.dispatcher.fireClearTileEvent(new ClearTileEvent(tile))
 		}
+	}
+
+	onNeighbors(tile: number, closure: (tile: number) => void): void {
+		let x = tile % gameMap.width;
+		let y = Math.floor(tile / gameMap.width);
+		if (x > 0) {
+			closure(tile - 1);
+		}
+		if (x < gameMap.width - 1) {
+			closure(tile + 1);
+		}
+		if (y > 0) {
+			closure(tile - gameMap.width);
+		}
+		if (y < gameMap.height - 1) {
+			closure(tile + gameMap.width);
+		}
+	}
+
+	/**
+	 * Check if a tile borders a tile owned by a player.
+	 * @param tile The tile to check.
+	 * @param player The player to check for.
+	 * @returns True if the tile borders a tile owned by the player, false otherwise.
+	 */
+	bordersTile(tile: number, player: number): boolean {
+		let x = tile % gameMap.width;
+		let y = Math.floor(tile / gameMap.width);
+		return (x > 0 && territoryManager.isOwner(tile - 1, player)) ||
+			(x < gameMap.width - 1 && territoryManager.isOwner(tile + 1, player)) ||
+			(y > 0 && territoryManager.isOwner(tile - gameMap.width, player)) ||
+			(y < gameMap.height - 1 && territoryManager.isOwner(tile + gameMap.width, player));
 	}
 }
 

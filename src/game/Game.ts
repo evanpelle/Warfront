@@ -1,18 +1,18 @@
-import { GameMap } from "../map/GameMap";
-import { gameRenderer } from "../Loader";
-import { mapNavigationHandler } from "./action/MapNavigationHandler";
-import { territoryManager } from "../map/TerritoryManager";
-import { PlayerManager, playerManager } from "./player/PlayerManager";
-import { Player } from "./player/Player";
-import { mapActionHandler } from "./action/MapActionHandler";
-import { spawnManager } from "./player/SpawnManager";
-import { random } from "./Random";
-import { gameTicker } from "./GameTicker";
-import { playerNameRenderingManager } from "../renderer/manager/PlayerNameRenderingManager";
-import { attackActionHandler } from "./action/AttackActionHandler";
-import { HSLColor } from "../util/HSLColor";
-import { GameMode } from "./mode/GameMode";
-import { getSetting } from "../util/UserSettingManager";
+import {GameMap} from "../map/GameMap";
+import {gameRenderer} from "../Loader";
+import {mapNavigationHandler} from "./action/MapNavigationHandler";
+import {territoryManager} from "../map/TerritoryManager";
+import {PlayerManager, playerManager} from "./player/PlayerManager";
+import {Player} from "./player/Player";
+import {mapActionHandler} from "./action/MapActionHandler";
+import {spawnManager} from "./player/SpawnManager";
+import {random} from "./Random";
+import {gameTicker} from "./GameTicker";
+import {playerNameRenderingManager} from "../renderer/manager/PlayerNameRenderingManager";
+import {attackActionHandler} from "./action/AttackActionHandler";
+import {HSLColor} from "../util/HSLColor";
+import {GameMode} from "./mode/GameMode";
+import {getSetting} from "../util/UserSettingManager";
 
 /**
  * The map of the current game.
@@ -56,7 +56,7 @@ export function startGame(map: GameMap, mode: GameMode) {
 	mapNavigationHandler.enable();
 	mapActionHandler.enable();
 	gameRenderer.initGameplayLayers();
-	territoryManager.reset();
+	territoryManager.init();
 	playerNameRenderingManager.reset(500);
 	attackActionHandler.init(500);
 	spawnManager.init(500);
@@ -74,4 +74,3 @@ export function startGame(map: GameMap, mode: GameMode) {
 export function startGameCycle() {
 	gameTicker.start();
 }
-
