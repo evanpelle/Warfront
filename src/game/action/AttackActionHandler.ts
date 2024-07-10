@@ -1,4 +1,3 @@
-import {playerManager} from "../player/PlayerManager";
 import {gameTicker, GameTickListener} from "../GameTicker";
 import {Player} from "../player/Player";
 import {AttackExecutor} from "./AttackExecutor";
@@ -34,14 +33,14 @@ class AttackActionHandler implements GameTickListener {
 			return;
 		}
 
-		let troopCount = Math.floor(playerManager.getPlayer(player).getTroops() * percentage);
-		playerManager.getPlayer(player).removeTroops(troopCount);
+		let troopCount = Math.floor(this.gs.getPlayer(player).getTroops() * percentage);
+		this.gs.getPlayer(player).removeTroops(troopCount);
 
 		if (target === GameState.OWNER_NONE) {
-			this.attackUnclaimed(playerManager.getPlayer(player), troopCount);
+			this.attackUnclaimed(this.gs.getPlayer(player), troopCount);
 			return;
 		}
-		this.attackPlayer(playerManager.getPlayer(player), playerManager.getPlayer(target), troopCount);
+		this.attackPlayer(this.gs.getPlayer(player), this.gs.getPlayer(target), troopCount);
 	}
 
 	/**
@@ -144,7 +143,7 @@ class AttackActionHandler implements GameTickListener {
 			if (attack.tick()) {
 				continue;
 			}
-			playerManager.getPlayer(attack.player.id).addTroops(attack.getTroops());
+			this.gs.getPlayer(attack.player.id).addTroops(attack.getTroops());
 			this.removeAttack(attack);
 		}
 	}

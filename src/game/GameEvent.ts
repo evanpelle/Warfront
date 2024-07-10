@@ -1,18 +1,15 @@
-import {Player} from "./player/Player";
+import {PlayerView, TerritoryTile} from "./GameState";
 
 
 export class TileUpdateEvent {
     constructor(
-        public newOwner: Player,
-        public tilePos: number,
-        public isBorder: boolean,
-        public isDelete: boolean = false
+        public tile: TerritoryTile
     ) { }
 }
 
 export class PlayerUpdateEvent {
     constructor(
-        public newPlayer: Player
+        public newPlayer: PlayerView
     ) { }
 }
 

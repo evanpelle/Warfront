@@ -1,6 +1,4 @@
 import {PrioritizedEventHandlerRegistry} from "./PrioritizedEventHandlerRegistry";
-import {mapTransformHandler} from "./MapTransformHandler";
-import {mapNavigationHandler} from "../game/action/MapNavigationHandler";
 
 /**
  * Manages interactions with the user.

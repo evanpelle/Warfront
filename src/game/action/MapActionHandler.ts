@@ -1,7 +1,5 @@
 import {ClickEventListener, interactionManager} from "../../event/InteractionManager";
 import {mapNavigationHandler} from "./MapNavigationHandler";
-import {clientPlayer} from "../player/PlayerManager";
-import {spawnManager} from "../player/SpawnManager";
 import {attackActionHandler} from "./AttackActionHandler";
 import {gameState, GameState} from "../GameState";
 
@@ -18,7 +16,14 @@ class MapActionHandler implements ClickEventListener {
 	 */
 	enable() {
 		this.gs = gameState
-		this.setAction(tile => spawnManager.isSelecting ? spawnManager.selectSpawnPoint(clientPlayer, tile) : attackActionHandler.preprocessAttack(clientPlayer.id, this.gs.getOwner(tile), 0.2));
+		this.setAction((tile) => {
+			if (this.gs.isSelecting) {
+				this.gs.registerPlayer(this.gs.clientPlayer, false, tile)
+				this.gs.isSelecting = false
+			} else {
+				attackActionHandler.preprocessAttack(this.gs.clientPlayer.id, this.gs.getOwner(tile), 0.2)
+			}
+		});
 		interactionManager.click.register(this);
 	}
 

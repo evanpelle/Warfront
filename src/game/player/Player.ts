@@ -1,3 +1,4 @@
+import {playerNameRenderingManager} from "../../renderer/manager/PlayerNameRenderingManager";
 import {attackActionHandler} from "../action/AttackActionHandler";
 import {HSLColor} from "../../util/HSLColor";
 import {gameMode} from "../Game";
@@ -52,7 +53,7 @@ export class Player {
 		this.gs.onNeighbors(tile, neighbor => {
 			if (this.gs.isOwner(neighbor, this.id) && !this.borderTiles.has(neighbor)) {
 				this.borderTiles.add(neighbor);
-				this.eventDispatcher.fireTileUpdateEvent(new TileUpdateEvent(this, tile, isborder))
+				this.eventDispatcher.fireTileUpdateEvent(new TileUpdateEvent(this, tile, isborder, true))
 			}
 		});
 

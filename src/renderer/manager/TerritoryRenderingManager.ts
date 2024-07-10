@@ -2,7 +2,6 @@ import {gameMap, isPlaying} from "../../game/Game";
 import {getSetting, registerSettingListener} from "../../util/UserSettingManager";
 import {HSLColor} from "../../util/HSLColor";
 import {territoryRenderer} from "../layer/TerritoryRenderer";
-import {playerManager} from "../../game/player/PlayerManager";
 import {GameTheme} from "../GameTheme";
 import {eventDispatcher, TileUpdateEvent} from "../../game/GameEvent";
 import {playerNameRenderingManager} from "./PlayerNameRenderingManager";
@@ -109,7 +108,7 @@ class TerritoryRenderingManager {
 		for (let i = 0; i < gameMap.width * gameMap.height; i++) {
 			const owner = this.gs.getOwner(i);
 			if (owner !== GameState.OWNER_NONE && owner !== GameState.OWNER_NONE - 1) {
-				const player = playerManager.getPlayer(owner);
+				const player = this.gs.getPlayer(owner);
 				const isTerritory = playerNameRenderingManager.isConsidered(i);
 				const index = (owner << 1) + (isTerritory ? 1 : 0);
 				if (!colorCache[index]) {
