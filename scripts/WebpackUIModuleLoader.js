@@ -9,14 +9,14 @@ class WebpackUIModuleLoader {
 			HtmlWebpackPlugin.getHooks(compilation).alterAssetTagGroups.tapAsync("UiModuleLoader", (data, cb) => {
 				console.log("Injecting UI modules...");
 				if (!data.bodyTags) data.bodyTags = [];
-				for (const file of readdirSync("src/ui/modules")) {
+				for (const file of readdirSync("src/client/ui/modules")) {
 					if (!file.endsWith(".html")) continue;
 					data.bodyTags.push({
 						tagName: "div",
 						attributes: {
 							id: file.replace(".html", "")
 						},
-						innerHTML: readFileSync("src/ui/modules/" + file, "utf8").replace(/<ignore>.*?<\/ignore>/gs, "")
+						innerHTML: readFileSync("src/client/ui/modules/" + file, "utf8").replace(/<ignore>.*?<\/ignore>/gs, "")
 					});
 				}
 
@@ -113,8 +113,7 @@ function processCssFiles(files) {
 		const fontFace = findBlock(files[i], "@font-face");
 		for (let j = 0; j < fontFace.length; j++) {
 			const fontFiles = fontFace[j].match(/url\((.*?)\)/g);
-			for (let k = 0; k < fontFiles.length; k++)
-			{
+			for (let k = 0; k < fontFiles.length; k++) {
 				let url = fontFiles[k].slice(4, -1);
 				if (url.startsWith("'") || url.startsWith("\"")) {
 					url = url.slice(1, -1);

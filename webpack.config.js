@@ -29,12 +29,12 @@ module.exports = {
 			{
 				test: /\.ts$/,
 				use: ["menu-loader"],
-				include: path.resolve(__dirname, "./src/ui/ModuleLoader.ts")
+				include: path.resolve(__dirname, "./src/client/ui/ModuleLoader.ts")
 			},
 			{
 				test: /\.ts$/,
 				use: ["theme-loader"],
-				include: path.resolve(__dirname, "./src/renderer/GameTheme.ts")
+				include: path.resolve(__dirname, "./src/client/graphics/GameTheme.ts")
 			}
 		]
 	},
