@@ -2,10 +2,6 @@ import {GameEvent} from "../EventBus"
 
 export type PlayerID = number
 
-export enum TerrainType {
-    Land,
-    Water
-}
 
 export class Cell {
     constructor(
@@ -21,12 +17,19 @@ export class PlayerInfo {
     ) { }
 }
 
+// TODO: make terrain api better.
 export class Terrain {
     constructor(
-        public readonly type: TerrainType,
         public readonly expansionCost: number,
         public readonly expansionTime: number,
     ) { }
+}
+
+export type TerrainType = typeof TerrainTypes[keyof typeof TerrainTypes];
+
+export const TerrainTypes = {
+    Land: new Terrain(1, 1),
+    Water: new Terrain(0, 0)
 }
 
 export interface TerrainMap {

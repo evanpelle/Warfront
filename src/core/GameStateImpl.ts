@@ -1,5 +1,5 @@
 import {EventBus} from "../EventBus";
-import {Cell, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, Terrain, TerrainMap, TerrainType, Tile, TileEvent} from "./GameStateApi";
+import {Cell, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, Tile, TileEvent} from "./GameStateApi";
 
 export function CreateGameState(terrainMap: TerrainMap, eventBus: EventBus): GameState {
     return new GameStateImpl(terrainMap, eventBus)
@@ -11,7 +11,7 @@ export class TileImpl implements Tile {
     constructor(
         private readonly gs: GameStateImpl,
         private readonly _cell: Cell,
-        private readonly _terrain: Terrain
+        private readonly _terrain: TerrainType
     ) { }
 
     hasOwner(): boolean {return this._owner != null}
@@ -19,7 +19,7 @@ export class TileImpl implements Tile {
     isBorder(): boolean {return this.gs.isBorder(this)}
     isInterior(): boolean {return this.hasOwner() && !this.isBorder()}
     cell(): Cell {return this._cell}
-    terrain(): Terrain {return this._terrain}
+    terrain(): TerrainType {return this._terrain}
     gameState(): GameStateView {return this.gs}
 }
 
@@ -44,9 +44,9 @@ class PlayerImpl implements Player {
 export class TerrainMapImpl implements TerrainMap {
 
 
-    constructor(public readonly tiles: Terrain[][]) { }
+    constructor(public readonly tiles: TerrainType[][]) { }
 
-    terrain(cell: Cell): Terrain {
+    terrain(cell: Cell): TerrainType {
         return this.tiles[cell.x][cell.y]
     }
 
@@ -175,7 +175,7 @@ class GameStateImpl implements GameState {
         }
         for (const neighbor of this.neighbors(tile.cell())) {
             let bordersEnemy = this.tile(neighbor).owner() != tile.owner()
-            let bordersWater = this.tile(neighbor).terrain().type != TerrainType.Land
+            let bordersWater = this.tile(neighbor).terrain() != TerrainTypes.Land
             if (bordersEnemy || bordersWater) {
                 return true
             }
@@ -194,7 +194,7 @@ class GameStateImpl implements GameState {
                 if (Math.abs(dx) === 2 && Math.abs(dy) === 2) {
                     continue;
                 }
-                if (this.tile(c).terrain().type != TerrainType.Land) {
+                if (this.tile(c).terrain() != TerrainTypes.Land) {
                     continue
                 }
                 if (this.tile(c).hasOwner()) {

@@ -1,5 +1,5 @@
 import {HSLColor} from "./client/graphics/HSLColor";
-import {PlayerID, Terrain, TerrainType} from "./core/GameStateApi";
+import {PlayerID, TerrainType, TerrainTypes} from "./core/GameStateApi";
 
 export interface Settings {
 	theme(): Theme
@@ -9,7 +9,7 @@ export interface Settings {
 export interface Theme {
 	territoryColor(id: PlayerID): HSLColor;
 	borderColor(id: PlayerID): HSLColor;
-	terrainColor(tile: Terrain): HSLColor;
+	terrainColor(tile: TerrainType): HSLColor;
 	backgroundColor(): HSLColor;
 	font(): string;
 	shaderArgs(): {name: string, args: {[key: string]: any}}[];
@@ -38,8 +38,8 @@ const pastelTheme = new class implements Theme {
 	borderColor(id: PlayerID): HSLColor {
 		return this.territory
 	}
-	terrainColor(tile: Terrain): HSLColor {
-		if (tile.type == TerrainType.Land) {
+	terrainColor(tile: TerrainType): HSLColor {
+		if (tile == TerrainTypes.Land) {
 			return this.land
 		}
 		return this.water
