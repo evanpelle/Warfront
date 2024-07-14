@@ -1,8 +1,19 @@
 {
   "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "module": "ESNext",
     "target": "es6",
     "rootDir": "src",
     "sourceMap": true
-  }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/custom.d.ts",
+    "resources/**/*",
+    "src/tools/TerrainMapGenerator.ts"
+  ],
 }

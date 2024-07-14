@@ -2,6 +2,8 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const HtmlInlineScriptPlugin = require("html-inline-script-webpack-plugin");
 const UiModuleLoader = require("./scripts/WebpackUIModuleLoader");
+const CopyPlugin = require('copy-webpack-plugin');
+
 
 module.exports = {
 	entry: {
@@ -14,9 +16,16 @@ module.exports = {
 	},
 	resolve: {
 		extensions: [".ts", ".js"],
+		alias: {
+			'@resources': path.resolve(__dirname, 'resources/'),
+		}
 	},
 	module: {
 		rules: [
+			{
+				test: /\.json$/,
+				type: 'asset/resource'
+			},
 			{
 				test: /\.ts$/,
 				use: ["ts-loader"]
@@ -29,12 +38,16 @@ module.exports = {
 			{
 				test: /\.ts$/,
 				use: ["menu-loader"],
-				include: path.resolve(__dirname, "./src/ui/ModuleLoader.ts")
+				include: path.resolve(__dirname, "./src/client/ui/ModuleLoader.ts")
 			},
 			{
 				test: /\.ts$/,
 				use: ["theme-loader"],
-				include: path.resolve(__dirname, "./src/renderer/GameTheme.ts")
+				include: path.resolve(__dirname, "./src/client/graphics/GameTheme.ts")
+			},
+			{
+				test: /\.(png|jpg|gif)$/i,
+				type: 'asset/resource'
 			}
 		]
 	},
@@ -45,7 +58,16 @@ module.exports = {
 			"theme-loader": path.resolve(__dirname, "./scripts/theme-loader.js")
 		}
 	},
-	plugins: [new HtmlWebpackPlugin({
-		template: "./src/template.html"
-	}), new HtmlInlineScriptPlugin(), new UiModuleLoader()]
+	plugins: [
+		new HtmlWebpackPlugin({
+			template: "./src/template.html"
+		}),
+		new HtmlInlineScriptPlugin(),
+		new UiModuleLoader(),
+		new CopyPlugin({
+			patterns: [
+				{from: 'resources/maps/WorldTerrain.json', to: 'assets/WorldTerrain.json'},
+			],
+		}),
+	]
 };
