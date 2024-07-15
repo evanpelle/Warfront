@@ -154,9 +154,6 @@ class GameStateImpl implements GameState {
         if (owner.ownsTile(cell)) {
             throw new Error("TODO")
         }
-        if (!this.tile(cell).isBorder()) {
-            throw new Error("TODO")
-        }
         let tile = this.map[cell.x][cell.y]
         let previousOwner = tile._owner
         if (previousOwner != null) {

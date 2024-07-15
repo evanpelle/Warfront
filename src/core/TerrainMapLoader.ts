@@ -4,6 +4,7 @@ import {TerrainMapImpl} from './GameStateImpl';
 
 export class TerrainMapLoader {
     public static load(): TerrainMap {
+
         const worldMap = mapFromId(1)
         const terrain: TerrainType[][] = []
         for (let x = 0; x < worldMap.width; x++) {
