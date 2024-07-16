@@ -1,3 +1,4 @@
+import {Executor} from "../core/execution/Executor";
 import {Cell, GameState, PlayerEvent, PlayerInfo, TileEvent} from "../core/GameStateApi";
 import {CreateGameState, TerrainMapImpl} from "../core/GameStateImpl";
 import {TerrainMapLoader} from "../core/TerrainMapLoader";
@@ -14,7 +15,7 @@ export async function creatClientGame(settings: Settings) {
     let gameRenderer = new GameRenderer(gs, settings.theme(), document.createElement("canvas"))
     let ticker = new Ticker(settings.tickInterval(), eventBus)
 
-    return new ClientGame(ticker, eventBus, gs, gameRenderer, new InputHandler(eventBus))
+    return new ClientGame(ticker, eventBus, gs, gameRenderer, new InputHandler(eventBus), new Executor(gs))
 }
 
 export class ClientGame {
@@ -23,7 +24,8 @@ export class ClientGame {
         private eventBus: EventBus,
         private gs: GameState,
         private renderer: GameRenderer,
-        private input: InputHandler
+        private input: InputHandler,
+        private executor: Executor
     ) { }
 
     public start() {
@@ -36,6 +38,7 @@ export class ClientGame {
 
         this.renderer.initialize()
         this.input.initialize()
+        this.executor.spawnBots(500)
         this.ticker.start()
     }
 
@@ -45,7 +48,7 @@ export class ClientGame {
 
     private inputEvent(event: ClickEvent) {
         const cell = this.renderer.screenToWorldCoordinates(event.x, event.y)
-        this.gs.spawnPlayer(new PlayerInfo("User", false), cell)
+        this.executor.spawnPlayer(new PlayerInfo("User", false), cell)
     }
 
 }

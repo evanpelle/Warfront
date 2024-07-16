@@ -9,7 +9,7 @@ export class Game {
 export function createGame(map: TerrainMap, human: PlayerInfo, numBots: number): Game {
 	let eventBus = new EventBus()
 	let gs = CreateGameState(map, eventBus)
-	gs.spawnPlayer(human, new Cell(100, 100))
+	// gs.addPlayer(human, new Cell(100, 100))
 	return null
 }
 

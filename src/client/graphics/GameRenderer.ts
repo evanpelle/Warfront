@@ -5,9 +5,9 @@ import {HSLColor} from "./HSLColor";
 
 export class GameRenderer {
 
-	private scale: number = 1
+	private scale: number = .8
 	private offsetX: number = 0
-	private offsetY: number = 0
+	private offsetY: number = 100
 
 	private context: CanvasRenderingContext2D
 
@@ -174,7 +174,7 @@ export class GameRenderer {
 	}
 
 
-	screenToWorldCoordinates(screenX: number, screenY: number): {x: number, y: number} {
+	screenToWorldCoordinates(screenX: number, screenY: number): Cell {
 
 		const canvasRect = this.canvas.getBoundingClientRect();
 		const canvasX = screenX - canvasRect.left;
@@ -209,7 +209,7 @@ export class GameRenderer {
 		console.log(`Current scale: ${this.scale}`);
 		console.log(`Current offset: ${this.offsetX}, ${this.offsetY}`);
 
-		return {x: Math.floor(gameX), y: Math.floor(gameY)};
+		return new Cell(Math.floor(gameX), Math.floor(gameY));
 	}
 
 }

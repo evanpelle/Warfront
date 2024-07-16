@@ -1,5 +1,5 @@
 import {EventBus} from "../EventBus";
-import {Cell, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, Tile, TileEvent} from "./GameStateApi";
+import {Cell, Execution, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, Tile, TileEvent} from "./GameStateApi";
 
 export function CreateGameState(terrainMap: TerrainMap, eventBus: EventBus): GameState {
     return new GameStateImpl(terrainMap, eventBus)
@@ -13,7 +13,6 @@ export class TileImpl implements Tile {
         private readonly _cell: Cell,
         private readonly _terrain: TerrainType
     ) { }
-
     hasOwner(): boolean {return this._owner != null}
     owner(): Player | null {return this._owner}
     isBorder(): boolean {return this.gs.isBorder(this)}
@@ -25,10 +24,9 @@ export class TileImpl implements Tile {
 
 class PlayerImpl implements Player {
     public tiles: Map<Cell, Tile> = new Map<Cell, Tile>()
-    public _troops: number
     public isAliveField = true
 
-    constructor(private gs: GameStateImpl, public readonly _id: PlayerID, public readonly playerInfo: PlayerInfo) { }
+    constructor(private gs: GameStateImpl, public readonly _id: PlayerID, public readonly playerInfo: PlayerInfo, private _troops) { }
 
     ownsTile(cell: Cell): boolean {return this.tiles.has(cell)}
     setTroops(troops: number) {this._troops = troops}
@@ -38,6 +36,9 @@ class PlayerImpl implements Player {
     troops(): number {return this._troops}
     isAlive(): boolean {return this.isAliveField}
     gameState(): GameState {return this.gs}
+    executions(): Execution[] {
+        return this.gs.executions().filter(exec => exec.owner() === this)
+    }
 }
 
 
@@ -63,6 +64,7 @@ class GameStateImpl implements GameState {
     idCounter: PlayerID = 0;
     map: TileImpl[][]
     players: Map<PlayerID, PlayerImpl> = new Map<PlayerID, PlayerImpl>
+    private execs: Execution[] = []
     private _width: number
     private _height: number
 
@@ -77,6 +79,18 @@ class GameStateImpl implements GameState {
                 this.map[x][y] = new TileImpl(this, cell, terrainMap.terrain(cell));
             }
         }
+    }
+
+    executions(): Execution[] {
+        return this.execs
+    }
+
+    addExecution(exec: Execution) {
+        this.execs.push(exec)
+    }
+
+    removeExecution(exec: Execution) {
+        this.execs.filter(execution => execution !== exec)
     }
 
     width(): number {
@@ -99,21 +113,18 @@ class GameStateImpl implements GameState {
         return this.player(id)
     }
 
-    spawnPlayer(playerInfo: PlayerInfo, spawn: Cell): Player {
+    addPlayer(playerInfo: PlayerInfo): Player {
         let id = this.idCounter
         this.idCounter++
-        let player = new PlayerImpl(this, id, playerInfo)
-        this.players[id] = player
-        for (const cell of this.getSpawnCells(spawn)) {
-            this.conquer(player, cell)
-        }
+        let player = new PlayerImpl(this, id, playerInfo, 100)
+        this.players.set(id, player)
         this.eventBus.emit(new PlayerEvent(player))
         return player
     }
 
     player(id: PlayerID): Player {
         if (!this.players.has(id)) {
-            throw new Error("TODO")
+            throw new Error(`Player with id ${id} not found`)
         }
         return this.players.get(id)
     }
@@ -178,28 +189,5 @@ class GameStateImpl implements GameState {
             }
         }
         return false
-    }
-
-    private getSpawnCells(cell: Cell): Cell[] {
-        let result: Cell[] = [];
-        for (let dx = -2; dx <= 2; dx++) {
-            for (let dy = -2; dy <= 2; dy++) {
-                let c = new Cell(cell.x + dx, cell.y + dy)
-                if (!this.isOnMap(c)) {
-                    continue
-                }
-                if (Math.abs(dx) === 2 && Math.abs(dy) === 2) {
-                    continue;
-                }
-                if (this.tile(c).terrain() != TerrainTypes.Land) {
-                    continue
-                }
-                if (this.tile(c).hasOwner()) {
-                    continue
-                }
-                result.push(c)
-            }
-        }
-        return result;
     }
 }
