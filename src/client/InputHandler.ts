@@ -1,4 +1,4 @@
-import {EventBus, GameEvent} from "../EventBus";
+import {EventBus, GameEvent} from "../core/EventBus";
 import {Cell} from "../core/GameStateApi";
 
 export class ClickEvent implements GameEvent {

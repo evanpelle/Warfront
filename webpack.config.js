@@ -5,7 +5,7 @@ const UiModuleLoader = require("./scripts/WebpackUIModuleLoader");
 
 module.exports = {
 	entry: {
-		main: "./src/Loader.ts"
+		main: "./src/client/Loader.ts"
 	},
 	output: {
 		publicPath: "/",
@@ -24,28 +24,22 @@ module.exports = {
 			{
 				test: /\.ts$/,
 				use: ["map-loader"],
-				include: path.resolve(__dirname, "./src/map/MapRegistry.ts")
+				include: path.resolve(__dirname, "./src/core/map/MapRegistry.ts")
 			},
 			{
 				test: /\.ts$/,
 				use: ["menu-loader"],
 				include: path.resolve(__dirname, "./src/client/ui/ModuleLoader.ts")
 			},
-			{
-				test: /\.ts$/,
-				use: ["theme-loader"],
-				include: path.resolve(__dirname, "./src/client/renderer/GameTheme.ts")
-			}
 		]
 	},
 	resolveLoader: {
 		alias: {
 			"map-loader": path.resolve(__dirname, "./scripts/map-loader.js"),
 			"menu-loader": path.resolve(__dirname, "./scripts/menu-loader.js"),
-			"theme-loader": path.resolve(__dirname, "./scripts/theme-loader.js")
 		}
 	},
 	plugins: [new HtmlWebpackPlugin({
-		template: "./src/template.html"
+		template: "./src/client/template.html"
 	}), new HtmlInlineScriptPlugin(), new UiModuleLoader()]
 };

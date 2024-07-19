@@ -1,4 +1,4 @@
-import {Theme} from "../../../Settings";
+import {Theme} from "../../../core/Settings";
 import {RendererLayer} from "./RendererLayer";
 
 /**

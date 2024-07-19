@@ -3,8 +3,8 @@ import {Cell, GameState, PlayerEvent, PlayerInfo, TileEvent} from "../core/GameS
 import {CreateGameState, TerrainMapImpl} from "../core/GameStateImpl";
 import {TerrainMapLoader} from "../core/TerrainMapLoader";
 import {Ticker, TickEvent} from "../core/Ticker";
-import {EventBus} from "../EventBus";
-import {Settings} from "../Settings";
+import {EventBus} from "../core/EventBus";
+import {Settings} from "../core/Settings";
 import {GameRenderer} from "./graphics/GameRenderer";
 import {InputHandler, ClickEvent, ZoomEvent, DragEvent} from "./InputHandler"
 

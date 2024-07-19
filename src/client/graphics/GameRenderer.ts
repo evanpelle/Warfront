@@ -1,5 +1,5 @@
 import {Cell, GameStateView, PlayerEvent, Tile, TileEvent} from "../../core/GameStateApi";
-import {Theme} from "../../Settings";
+import {Theme} from "../../core/Settings";
 import {DragEvent, ZoomEvent} from "../InputHandler";
 import {HSLColor} from "./HSLColor";
 

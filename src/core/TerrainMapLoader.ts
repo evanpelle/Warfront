@@ -1,4 +1,4 @@
-import {mapFromId} from '../map/MapRegistry';
+import {mapFromId} from './map/MapRegistry';
 import {TerrainMap, TerrainTypes, TerrainType} from './GameStateApi'; // Adjust the import path as needed
 import {TerrainMapImpl} from './GameStateImpl';
 

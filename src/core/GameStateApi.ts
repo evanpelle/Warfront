@@ -1,4 +1,4 @@
-import {GameEvent} from "../EventBus"
+import {GameEvent} from "./EventBus"
 
 export type PlayerID = number
 

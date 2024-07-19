@@ -1,4 +1,4 @@
-import {EventBus} from "../EventBus"
+import {EventBus} from "./EventBus"
 import {Cell, PlayerInfo, TerrainMap} from "./GameStateApi"
 import {CreateGameState} from "./GameStateImpl"
 

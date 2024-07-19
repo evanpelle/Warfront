@@ -1,5 +1,5 @@
 import {CachedLayer} from "./CachedLayer";
-import {Theme} from "../../../Settings";
+import {Theme} from "../../../core/Settings";
 import {loadShaders} from "../shader/ShaderManager";
 import {MapMoveListener, MapScaleListener} from "../../MapTransformHandler";
 import {GameStateView} from "../../../core/GameStateApi";

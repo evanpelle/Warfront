@@ -2,7 +2,7 @@ import {PostGenerationShader} from "./PostGenerationShader";
 import {FixedDistanceShader} from "./FixedDistanceShader";
 import {DynamicDistanceShader} from "./DynamicDistanceShader";
 import {HSLColor} from "../HSLColor";
-import {Theme} from "../../../Settings";
+import {Theme} from "../../../core/Settings";
 
 const shaderList = {
 	"territory-outline": {type: "post-generation", build: (args: {color: HSLColor, thickness: number}) => new FixedDistanceShader(args.color, -args.thickness, 0)},

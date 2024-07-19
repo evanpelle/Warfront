@@ -1,4 +1,4 @@
-import {openMenu} from "./client/ui/ModuleLoader";
+import {openMenu} from "./ui/ModuleLoader";
 
 
 window.addEventListener("load", () => {

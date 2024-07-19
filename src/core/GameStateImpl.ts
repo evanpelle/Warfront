@@ -1,4 +1,4 @@
-import {EventBus} from "../EventBus";
+import {EventBus} from "./EventBus";
 import {Cell, Execution, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, Tile, TileEvent} from "./GameStateApi";
 
 export function CreateGameState(terrainMap: TerrainMap, eventBus: EventBus): GameState {

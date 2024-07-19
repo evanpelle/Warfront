@@ -1,5 +1,5 @@
 import {Cell, TileEvent} from "../../core/GameStateApi";
-import {Theme} from "../../Settings";
+import {Theme} from "../../core/Settings";
 import {HSLColor} from "./HSLColor";
 
 // TODO calculater border tiles

@@ -1,4 +1,4 @@
-import {defaultSettings} from "../../../Settings";
+import {defaultSettings} from "../../../core/Settings";
 import {creatClientGame} from "../../ClientGame";
 import {FullScreenRenderer} from "../../graphics/SimpleRenderer";
 import {ModuleAdapter, closeMenu} from "../ModuleLoader";

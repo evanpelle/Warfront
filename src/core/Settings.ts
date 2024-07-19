@@ -1,5 +1,5 @@
-import {HSLColor} from "./client/graphics/HSLColor";
-import {PlayerID, TerrainType, TerrainTypes} from "./core/GameStateApi";
+import {HSLColor} from "../client/graphics/HSLColor";
+import {PlayerID, TerrainType, TerrainTypes} from "./GameStateApi";
 
 export interface Settings {
 	theme(): Theme

@@ -1,5 +1,5 @@
-import {EventBus, GameEvent} from "../EventBus";
-import {Settings} from "../Settings";
+import {EventBus, GameEvent} from "./EventBus";
+import {Settings} from "./Settings";
 
 export class TickEvent implements GameEvent {
 	constructor(public readonly tickCount: number) { }
