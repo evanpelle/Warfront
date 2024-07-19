@@ -13,12 +13,18 @@ export class TileImpl implements Tile {
         private readonly _cell: Cell,
         private readonly _terrain: TerrainType
     ) { }
+
     hasOwner(): boolean {return this._owner != null}
     owner(): Player | null {return this._owner}
     isBorder(): boolean {return this.gs.isBorder(this)}
     isInterior(): boolean {return this.hasOwner() && !this.isBorder()}
     cell(): Cell {return this._cell}
     terrain(): TerrainType {return this._terrain}
+
+    neighbors(): Tile[] {
+        return this.gs.neighbors(this._cell).map(c => this.gs.tile(c))
+    }
+
     gameState(): GameStateView {return this.gs}
 }
 
@@ -37,7 +43,27 @@ class PlayerImpl implements Player {
     isAlive(): boolean {return this.isAliveField}
     gameState(): GameState {return this.gs}
     executions(): Execution[] {
-        return this.gs.executions().filter(exec => exec.owner() === this)
+        return this.gs.executions().filter(exec => exec.owner().id() == this.id())
+    }
+    borderTiles(): ReadonlySet<Tile> {
+        // TODO: make this more efficient.
+        const border: Set<Tile> = new Set()
+        for (const tile of this.tiles.values()) {
+            if (tile.isBorder()) {
+                border.add(tile)
+            }
+        }
+        return border
+    }
+
+    borderTilesWith(other: PlayerView): ReadonlySet<Tile> {
+        const borderWith: Set<Tile> = new Set()
+        for (const tile of this.tiles.values()) {
+            if (tile.isBorder() && tile.neighbors().filter(t => t.owner() == other).length > 0) {
+                borderWith.add(tile)
+            }
+        }
+        return borderWith
     }
 }
 
@@ -163,7 +189,7 @@ class GameStateImpl implements GameState {
             throw new Error("TODO")
         }
         if (owner.ownsTile(cell)) {
-            throw new Error("TODO")
+            throw new Error(`Player ${owner} already owns cell ${cell}`)
         }
         let tile = this.map[cell.x][cell.y]
         let previousOwner = tile._owner

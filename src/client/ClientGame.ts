@@ -1,4 +1,4 @@
-import {Executor} from "../core/execution/Executor";
+import {AttackExecution, Executor} from "../core/execution/Executor";
 import {Cell, GameState, PlayerEvent, PlayerInfo, TileEvent} from "../core/GameStateApi";
 import {CreateGameState, TerrainMapImpl} from "../core/GameStateImpl";
 import {TerrainMapLoader} from "../core/TerrainMapLoader";
@@ -38,17 +38,19 @@ export class ClientGame {
 
         this.renderer.initialize()
         this.input.initialize()
-        this.executor.spawnBots(500)
+        this.executor.spawnBots(500).forEach(b => this.gs.addExecution(new AttackExecution(1000, b, null)))
         this.ticker.start()
     }
 
     private tick(tickEvent: TickEvent) {
+        this.gs.executions().forEach(e => e.tick())
         this.renderer.renderGame()
     }
 
     private inputEvent(event: ClickEvent) {
         const cell = this.renderer.screenToWorldCoordinates(event.x, event.y)
-        this.executor.spawnPlayer(new PlayerInfo("User", false), cell)
+        const player = this.executor.spawnPlayer(new PlayerInfo("User", false), cell)
+        this.gs.addExecution(new AttackExecution(1000, player, null))
     }
 
 }

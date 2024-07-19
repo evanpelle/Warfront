@@ -111,8 +111,6 @@ export class GameRenderer {
 	// }
 
 	tileUpdate(event: TileEvent) {
-		// TODO: use batching and imageData
-		console.log(`new tile update: ${event.tile.owner().id()}`)
 		this.paintTile(event.tile)
 	}
 

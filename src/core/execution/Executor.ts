@@ -6,16 +6,17 @@ export class Executor {
 
     }
 
-    spawnPlayer(playerInfo: PlayerInfo, cell: Cell) {
+    spawnPlayer(playerInfo: PlayerInfo, cell: Cell): Player {
         const player = this.gs.addPlayer(playerInfo)
         getSpawnCells(this.gs, cell).forEach(c => {
             player.conquer(c)
         })
+        return player
     }
 
 
-    spawnBots(numBots: number) {
-        new BotSpawner(this.gs).spawnBots(numBots)
+    spawnBots(numBots: number): Player[] {
+        return new BotSpawner(this.gs).spawnBots(numBots)
     }
 
     tick() {
@@ -24,13 +25,45 @@ export class Executor {
     }
 }
 
-class AttackExecution implements Execution {
+export class AttackExecution implements Execution {
     private active: boolean = true;
+    private enemyBorders: Tile[] = []
 
-    constructor(private _owner: Player, private target: Player, private gs: GameState) { }
+    constructor(private troops: number, private _owner: Player, private target: Player) { }
 
     tick() {
+        if (!this.active) {
+            return
+        }
+        if (this.troops < 1) {
+            this.active = false
+            return
+        }
 
+        if (this.enemyBorders.length == 0) {
+            const border = this.owner().borderTilesWith(this.target)
+            if (border.size == 0) {
+                this.active = false
+                return
+            }
+            for (const b of border) {
+                b.neighbors().filter(t => t.owner() == this.target).forEach(t => this.enemyBorders.push(t))
+            }
+        }
+
+        let tile: Tile = null
+        while (true) {
+            if (this.enemyBorders.length == 0) {
+                return
+            }
+            tile = this.enemyBorders.pop()
+            if (tile.owner() == this.target) {
+                break
+            }
+        }
+
+        this.troops -= 1
+        this.owner().conquer(tile.cell())
     }
 
     owner(): Player {
@@ -50,7 +83,8 @@ class BotSpawner {
 
     constructor(private gs: GameState) { }
 
-    spawnBots(numBots: number) {
+    spawnBots(numBots: number): Player[] {
+        const bots = []
         this.cellToIndex = new Map<string, number>()
         this.freeTiles = new Array();
         this.numFreeTiles = 0
@@ -68,16 +102,18 @@ class BotSpawner {
             this.numFreeTiles++
         })
         for (let i = 0; i < numBots; i++) {
-            this.spawnBot("Bot" + i)
+            bots.push(this.spawnBot("Bot" + i))
         }
+        return bots
     }
 
-    spawnBot(botName: string) {
+    spawnBot(botName: string): Player {
         const bot = this.gs.addPlayer(new PlayerInfo(botName, true))
         const rand = getRandomNumber(this.numFreeTiles)
         const spawnCells = getSpawnCells(this.gs, this.freeTiles[rand])
         spawnCells.forEach(c => this.removeCell(c))
         spawnCells.forEach(c => this.gs.player(bot.id()).conquer(c))
+        return bot
     }
 
     private removeCell(cell: Cell) {
@@ -114,4 +150,8 @@ function getSpawnCells(gs: GameStateView, cell: Cell): Cell[] {
 
 function getRandomNumber(n: number): number {
     return Math.floor(Math.random() * n);
+}
+
+function getRandomElement<T>(list: T[]): T | undefined {
+    return list[Math.floor(Math.random() * list.length)];
 }

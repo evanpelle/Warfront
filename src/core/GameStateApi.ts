@@ -57,6 +57,7 @@ export interface Tile {
     cell(): Cell
     terrain(): Terrain
     gameState(): GameStateView
+    neighbors(): Tile[]
 }
 
 export interface PlayerView {
@@ -67,6 +68,8 @@ export interface PlayerView {
     isAlive(): boolean
     gameState(): GameStateView
     executions(): ExecutionView[]
+    borderTiles(): ReadonlySet<Tile>
+    borderTilesWith(other: PlayerView): ReadonlySet<Tile>
 }
 
 export interface Player extends PlayerView {
@@ -75,7 +78,6 @@ export interface Player extends PlayerView {
     gameState(): GameState
     executions(): Execution[]
 }
-
 
 export interface GameStateView {
     // Throws exception is player not found
