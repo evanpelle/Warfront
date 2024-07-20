@@ -1,20 +1,26 @@
 const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const HtmlInlineScriptPlugin = require("html-inline-script-webpack-plugin");
-const UiModuleLoader = require("./scripts/WebpackUIModuleLoader");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 
 module.exports = {
 	entry: {
-		main: "./src/client/Loader.ts"
+		main: "./src/client/Index.ts"
 	},
 	output: {
-		publicPath: "/",
-		path: path.resolve(__dirname, './out'),
-		filename: "[name]-bundle.js"
+		filename: 'bundle.js',
+		path: path.resolve(__dirname, 'out'),
 	},
 	resolve: {
 		extensions: [".ts", ".js"],
 	},
+	plugins: [
+		new HtmlWebpackPlugin({
+			template: './src/client/index.html',
+			filename: 'index.html'
+		}),
+	],
+	devtool: 'inline-source-map',
+	mode: 'development',
 	module: {
 		rules: [
 			{
@@ -26,20 +32,11 @@ module.exports = {
 				use: ["map-loader"],
 				include: path.resolve(__dirname, "./src/core/map/MapRegistry.ts")
 			},
-			{
-				test: /\.ts$/,
-				use: ["menu-loader"],
-				include: path.resolve(__dirname, "./src/client/ui/ModuleLoader.ts")
-			},
 		]
 	},
 	resolveLoader: {
 		alias: {
 			"map-loader": path.resolve(__dirname, "./scripts/map-loader.js"),
-			"menu-loader": path.resolve(__dirname, "./scripts/menu-loader.js"),
 		}
 	},
-	plugins: [new HtmlWebpackPlugin({
-		template: "./src/client/template.html"
-	}), new HtmlInlineScriptPlugin(), new UiModuleLoader()]
 };

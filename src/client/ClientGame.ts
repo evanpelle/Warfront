@@ -8,9 +8,9 @@ import {Settings} from "../core/Settings";
 import {GameRenderer} from "./graphics/GameRenderer";
 import {InputHandler, ClickEvent, ZoomEvent, DragEvent} from "./InputHandler"
 
-export async function creatClientGame(settings: Settings) {
+export function createClientGame(settings: Settings): ClientGame {
     let eventBus = new EventBus()
-    let terrainMap = await TerrainMapLoader.load()
+    let terrainMap = TerrainMapLoader.load()
     let gs = CreateGameState(terrainMap, eventBus)
     let gameRenderer = new GameRenderer(gs, settings.theme(), document.createElement("canvas"))
     let ticker = new Ticker(settings.tickInterval(), eventBus)
@@ -29,6 +29,8 @@ export class ClientGame {
     ) { }
 
     public start() {
+        console.log('starting game!')
+        // TODO: make each class do this, or maybe have client intercept all requests?
         this.eventBus.on(TickEvent, (e) => this.tick(e))
         this.eventBus.on(TileEvent, (e) => this.renderer.tileUpdate(e))
         this.eventBus.on(PlayerEvent, (e) => this.renderer.playerUpdate(e))
