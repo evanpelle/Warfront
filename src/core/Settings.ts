@@ -3,7 +3,8 @@ import {PlayerID, TerrainType, TerrainTypes} from "./GameStateApi";
 
 export interface Settings {
 	theme(): Theme
-	tickInterval(): number
+	tickIntervalMs(): number
+	syncIntervalMs(): number
 }
 
 export interface Theme {
@@ -19,8 +20,12 @@ export const defaultSettings = new class implements Settings {
 
 	theme(): Theme {return pastelTheme}
 
-	tickInterval(): number {
+	tickIntervalMs(): number {
 		return 1000 / 20; // 50ms
+	}
+
+	syncIntervalMs(): number {
+		return 1000 / 3 // 3 syncs per second
 	}
 
 }

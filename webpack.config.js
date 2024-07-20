@@ -1,17 +1,34 @@
-const path = require("path");
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import path from 'path';
+import {fileURLToPath} from 'url';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-module.exports = {
-	entry: {
-		main: "./src/client/Index.ts"
-	},
+export default {
+	entry: './src/client/Client.ts',
 	output: {
 		filename: 'bundle.js',
 		path: path.resolve(__dirname, 'out'),
 	},
+	module: {
+		rules: [
+			{
+				test: /\.ts$/,
+				use: 'ts-loader',
+				exclude: /node_modules/,
+			},
+			{
+				test: /\.(png|jpe?g|gif)$/i,
+				type: 'asset/resource',
+				generator: {
+					filename: 'images/[hash][ext][query]'
+				}
+			}
+		],
+	},
 	resolve: {
-		extensions: [".ts", ".js"],
+		extensions: ['.ts', '.js'],
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
@@ -19,24 +36,18 @@ module.exports = {
 			filename: 'index.html'
 		}),
 	],
-	devtool: 'inline-source-map',
-	mode: 'development',
-	module: {
-		rules: [
+	devServer: {
+		static: {
+			directory: path.join(__dirname, 'out'),
+		},
+		compress: true,
+		port: 9000,
+		proxy: [
 			{
-				test: /\.ts$/,
-				use: ["ts-loader"]
+				context: ['/socket'],
+				target: 'ws://localhost:3000',
+				ws: true,
 			},
-			{
-				test: /\.ts$/,
-				use: ["map-loader"],
-				include: path.resolve(__dirname, "./src/core/map/MapRegistry.ts")
-			},
-		]
-	},
-	resolveLoader: {
-		alias: {
-			"map-loader": path.resolve(__dirname, "./scripts/map-loader.js"),
-		}
+		],
 	},
 };

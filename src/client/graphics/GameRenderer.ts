@@ -98,18 +98,6 @@ export class GameRenderer {
 		);
 	}
 
-	// redraw() {
-	// 	this.context.fillStyle = this.theme.backgroundColor().toString()
-	// 	this.context.clearRect(0, 0, this.gs.width(), this.gs.height());
-	// 	const imageData = this.context.getImageData(0, 0, this.gs.width(), this.gs.height());
-	// 	this.gs.forEachTile((tile) => {
-	// 		const color = this.theme.terrainColor(tile.terrain())
-	// 		const index = (tile.cell().y * this.gs.width()) + tile.cell().x
-	// 		color.toRGB().writeToBuffer(imageData.data, index * 4)
-	// 	})
-	// 	this.context.putImageData(imageData, 0, 0)
-	// }
-
 	tileUpdate(event: TileEvent) {
 		this.paintTile(event.tile)
 	}
@@ -138,10 +126,6 @@ export class GameRenderer {
 		const index = (cell.y * this.gs.width()) + cell.x
 		color.toRGB().writeToBuffer(this.imageData.data, index * 4)
 	}
-
-	// clearCell(cell: Cell): void {
-	// 	this.context.clearRect(cell.x, cell.y, 1, 1);
-	// }
 
 	onZoom(event: ZoomEvent) {
 		const oldScale = this.scale;
@@ -186,23 +170,6 @@ export class GameRenderer {
 		const gameY = centerY + this.gs.height() / 2
 
 
-		// Adjust the offset
-		//this.offsetX = zoomPointX - (canvasX - this.gs.width() / 2) / this.scale;
-		//this.offsetY = zoomPointY - (canvasY - this.gs.height() / 2) / this.scale;
-
-
-		// const screenCenterX = this.canvas.width / 2
-		// const screenCenterY = this.canvas.height / 2
-
-
-		// // Calculate world coordinates
-		// let worldX = screenX / this.scale + this.offsetX;
-		// let worldY = screenY / this.scale + this.offsetY;
-
-		// console.log(`Screen center: ${screenCenterX}, ${screenCenterY}`);
-
-		// console.log(`Screen coordinates: ${screenX}, ${screenY}`);
-		// console.log(`World coordinates before floor: ${worldX}, ${worldY}`);
 		console.log(`zoom point ${centerX} ${centerY}`)
 		console.log(`Current scale: ${this.scale}`);
 		console.log(`Current offset: ${this.offsetX}, ${this.offsetY}`);

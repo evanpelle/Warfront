@@ -1,19 +1,17 @@
 import {AttackExecution, Executor} from "../core/execution/Executor";
-import {Cell, GameState, PlayerEvent, PlayerInfo, TileEvent} from "../core/GameStateApi";
-import {CreateGameState, TerrainMapImpl} from "../core/GameStateImpl";
-import {TerrainMapLoader} from "../core/TerrainMapLoader";
+import {Cell, GameState, PlayerEvent, PlayerInfo, TerrainMap, TileEvent} from "../core/GameStateApi";
+import {CreateGameState} from "../core/GameStateImpl";
 import {Ticker, TickEvent} from "../core/Ticker";
 import {EventBus} from "../core/EventBus";
 import {Settings} from "../core/Settings";
 import {GameRenderer} from "./graphics/GameRenderer";
 import {InputHandler, ClickEvent, ZoomEvent, DragEvent} from "./InputHandler"
 
-export function createClientGame(settings: Settings): ClientGame {
+export function createClientGame(settings: Settings, terrainMap: TerrainMap): ClientGame {
     let eventBus = new EventBus()
-    let terrainMap = TerrainMapLoader.load()
     let gs = CreateGameState(terrainMap, eventBus)
     let gameRenderer = new GameRenderer(gs, settings.theme(), document.createElement("canvas"))
-    let ticker = new Ticker(settings.tickInterval(), eventBus)
+    let ticker = new Ticker(settings.tickIntervalMs(), eventBus)
 
     return new ClientGame(ticker, eventBus, gs, gameRenderer, new InputHandler(eventBus), new Executor(gs))
 }

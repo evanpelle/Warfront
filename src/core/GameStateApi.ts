@@ -1,6 +1,8 @@
 import {GameEvent} from "./EventBus"
 
-export type PlayerID = number
+export type PlayerID = number // TODO: make string?
+
+export type ServerID = string
 
 export class Cell {
     constructor(

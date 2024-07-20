@@ -1,20 +1,26 @@
-import {mapFromId} from './map/MapRegistry';
-import {TerrainMap, TerrainTypes, TerrainType} from './GameStateApi'; // Adjust the import path as needed
+import {Jimp as JimpType, JimpConstructors} from '@jimp/core';
+import 'jimp';
+import {TerrainMap, TerrainType, TerrainTypes} from './GameStateApi';
 import {TerrainMapImpl} from './GameStateImpl';
 
-export class TerrainMapLoader {
-    public static load(): TerrainMap {
+declare const Jimp: JimpType & JimpConstructors;
 
-        const worldMap = mapFromId(1)
-        const terrain: TerrainType[][] = []
-        for (let x = 0; x < worldMap.width; x++) {
-            terrain[x] = [];
-            for (let y = 0; y < worldMap.height; y++) {
-                const index = (y * worldMap.width) + x
-                const tileNum = worldMap.tiles[index]
-                terrain[x][y] = tileNum == 0 ? TerrainTypes.Water : TerrainTypes.Land
-            }
+export async function loadTerrainMap(): Promise<TerrainMap> {
+    const imageModule = await import(`../../resources/maps/World.png`);
+    const imageUrl = imageModule.default;
+    const image = await Jimp.read(imageUrl)
+    const {width, height} = image.bitmap;
+
+    // Initialize the 2D array
+    const terrain: TerrainType[][] = Array(width).fill(null).map(() => Array(height).fill(TerrainTypes.Water));
+
+    image.scan(0, 0, width, height, function (x: number, y: number, idx: number) {
+        const red = this.bitmap.data[idx + 0];
+
+        if (red > 100) {
+            terrain[x][y] = TerrainTypes.Land;
         }
-        return new TerrainMapImpl(terrain)
-    }
+    })
+
+    return new TerrainMapImpl(terrain);
 }
