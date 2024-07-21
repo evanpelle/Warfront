@@ -1,7 +1,7 @@
-import {Cell, GameStateView, PlayerEvent, Tile, TileEvent} from "../../core/GameStateApi";
-import {Theme} from "../../core/Settings";
-import {DragEvent, ZoomEvent} from "../InputHandler";
-import {HSLColor} from "./HSLColor";
+import {Colord} from "colord";
+import {Cell, GameStateView, PlayerEvent, Tile, TileEvent} from "../core/GameStateApi";
+import {Theme} from "../core/Settings";
+import {DragEvent, ZoomEvent} from "./InputHandler";
 
 export class GameRenderer {
 
@@ -59,7 +59,7 @@ export class GameRenderer {
 		this.context.clearRect(0, 0, this.gs.width(), this.gs.height());
 
 		// Set background
-		this.context.fillStyle = this.theme.backgroundColor().toString();
+		this.context.fillStyle = this.theme.backgroundColor().toHex();
 		this.context.fillRect(0, 0, this.gs.width(), this.gs.height());
 
 		// Create a temporary canvas for the game content
@@ -122,9 +122,13 @@ export class GameRenderer {
 	}
 
 
-	paintCell(cell: Cell, color: HSLColor) {
+	paintCell(cell: Cell, color: Colord) {
 		const index = (cell.y * this.gs.width()) + cell.x
-		color.toRGB().writeToBuffer(this.imageData.data, index * 4)
+		const offset = index * 4
+		this.imageData.data[offset] = color.rgba.r;
+		this.imageData.data[offset + 1] = color.rgba.g;
+		this.imageData.data[offset + 2] = color.rgba.b;
+		this.imageData.data[offset + 3] = color.rgba.a * 255 | 0
 	}
 
 	onZoom(event: ZoomEvent) {

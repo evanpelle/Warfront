@@ -11,7 +11,6 @@ export async function loadTerrainMap(): Promise<TerrainMap> {
     const image = await Jimp.read(imageUrl)
     const {width, height} = image.bitmap;
 
-    // Initialize the 2D array
     const terrain: TerrainType[][] = Array(width).fill(null).map(() => Array(height).fill(TerrainTypes.Water));
 
     image.scan(0, 0, width, height, function (x: number, y: number, idx: number) {

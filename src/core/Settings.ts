@@ -1,61 +1,63 @@
-import {HSLColor} from "../client/graphics/HSLColor";
 import {PlayerID, TerrainType, TerrainTypes} from "./GameStateApi";
+import {Colord, colord} from "colord";
 
 export interface Settings {
-	theme(): Theme
-	tickIntervalMs(): number
-	syncIntervalMs(): number
+	theme(): Theme;
+	tickIntervalMs(): number;
+	syncIntervalMs(): number;
 }
 
 export interface Theme {
-	territoryColor(id: PlayerID): HSLColor;
-	borderColor(id: PlayerID): HSLColor;
-	terrainColor(tile: TerrainType): HSLColor;
-	backgroundColor(): HSLColor;
+	territoryColor(id: PlayerID): Colord;
+	borderColor(id: PlayerID): Colord;
+	terrainColor(tile: TerrainType): Colord;
+	backgroundColor(): Colord;
 	font(): string;
-	shaderArgs(): {name: string, args: {[key: string]: any}}[];
+	shaderArgs(): {name: string; args: {[key: string]: any}}[];
 }
 
 export const defaultSettings = new class implements Settings {
-
-	theme(): Theme {return pastelTheme}
+	theme(): Theme {return pastelTheme;}
 
 	tickIntervalMs(): number {
 		return 1000 / 20; // 50ms
 	}
 
 	syncIntervalMs(): number {
-		return 1000 / 3 // 3 syncs per second
+		return 1000 / 3; // 3 syncs per second
 	}
-
 }
 
 const pastelTheme = new class implements Theme {
+	private background = colord({r: 100, g: 100, b: 100});
+	private land = colord({r: 244, g: 243, b: 198});
+	private water = colord({r: 160, g: 203, b: 231});
+	private territory = colord({r: 173, g: 216, b: 230});
 
-	private background = HSLColor.fromRGB(100, 100, 100)
-	private land = HSLColor.fromRGB(244, 243, 198)
-	private water = HSLColor.fromRGB(160, 203, 231)
-	private territory = HSLColor.fromRGB(173, 216, 230)
+	territoryColor(id: PlayerID): Colord {
+		return colord({r: (id * 10) % 250, g: (id * 100) % 250, b: (id) % 250});
+	}
 
-	territoryColor(id: PlayerID): HSLColor {
-		return this.territory
+	borderColor(id: PlayerID): Colord {
+		return this.territory;
 	}
-	borderColor(id: PlayerID): HSLColor {
-		return this.territory
-	}
-	terrainColor(tile: TerrainType): HSLColor {
+
+	terrainColor(tile: TerrainType): Colord {
 		if (tile == TerrainTypes.Land) {
-			return this.land
+			return this.land;
 		}
-		return this.water
+		return this.water;
 	}
-	backgroundColor(): HSLColor {
-		return this.background
+
+	backgroundColor(): Colord {
+		return this.background;
 	}
+
 	font(): string {
-		return "Overpass"
+		return "Overpass";
 	}
-	shaderArgs(): {name: string; args: {[key: string]: any;};}[] {
+
+	shaderArgs(): {name: string; args: {[key: string]: any}}[] {
 		throw new Error("Method not implemented.");
 	}
 }

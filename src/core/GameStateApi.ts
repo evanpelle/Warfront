@@ -1,5 +1,7 @@
 import {GameEvent} from "./EventBus"
 
+export type ClientID = string
+
 export type PlayerID = number // TODO: make string?
 
 export type ServerID = string
@@ -95,6 +97,7 @@ export interface GameStateView {
 
 export interface GameState extends GameStateView {
     player(id: PlayerID): Player
+    players(): Player[]
     addPlayer(playerInfo: PlayerInfo): Player
     executions(): Execution[]
     addExecution(exec: Execution)
@@ -107,5 +110,5 @@ export class TileEvent implements GameEvent {
 }
 
 export class PlayerEvent implements GameEvent {
-    constructor(public readonly player: Player) { }
+    constructor(public readonly player: PlayerView) { }
 }

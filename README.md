@@ -27,4 +27,3 @@ Or for a production build:
 ```bash
 npm run build-prod
 ```
-

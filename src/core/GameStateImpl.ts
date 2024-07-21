@@ -89,7 +89,7 @@ export class TerrainMapImpl implements TerrainMap {
 class GameStateImpl implements GameState {
     idCounter: PlayerID = 0;
     map: TileImpl[][]
-    players: Map<PlayerID, PlayerImpl> = new Map<PlayerID, PlayerImpl>
+    _players: Map<PlayerID, PlayerImpl> = new Map<PlayerID, PlayerImpl>
     private execs: Execution[] = []
     private _width: number
     private _height: number
@@ -105,6 +105,9 @@ class GameStateImpl implements GameState {
                 this.map[x][y] = new TileImpl(this, cell, terrainMap.terrain(cell));
             }
         }
+    }
+    players(): Player[] {
+        return Array.from(this._players.values())
     }
 
     executions(): Execution[] {
@@ -143,16 +146,16 @@ class GameStateImpl implements GameState {
         let id = this.idCounter
         this.idCounter++
         let player = new PlayerImpl(this, id, playerInfo, 100)
-        this.players.set(id, player)
+        this._players.set(id, player)
         this.eventBus.emit(new PlayerEvent(player))
         return player
     }
 
     player(id: PlayerID): Player {
-        if (!this.players.has(id)) {
+        if (!this._players.has(id)) {
             throw new Error(`Player with id ${id} not found`)
         }
-        return this.players.get(id)
+        return this._players.get(id)
     }
 
     tile(cell: Cell): Tile {
