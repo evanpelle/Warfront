@@ -3,11 +3,10 @@ import http from 'http';
 import {WebSocketServer} from 'ws';
 import path from 'path';
 import {fileURLToPath} from 'url';
-import crypto from 'crypto';
-import {ClientID} from '../core/GameStateApi';
-import WebSocket from 'ws';
-import {ClientIntentMessageSchema, ClientMessage, ClientMessageSchema, Hi, Intent, ServerMessage, ServerMessageSchema, ServerSyncMessage, ServerSyncMessageSchema, SpawnIntentSchema} from '../core/Schemas';
-import {TerrainMapImpl} from '../core/GameStateImpl';
+import {GameManager} from './GameManager';
+import {Client} from './Client';
+import {ClientMessage, ClientMessageSchema} from '../core/Schemas';
+import {Lobby} from './Lobby';
 
 
 
@@ -18,47 +17,43 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({server});
 
-const clients: Map<ClientID, WebSocket> = new Map()
-let intents: Intent[] = []
 
 // Serve static files from the 'out' directory
 app.use(express.static(path.join(__dirname, '../../out')));
+app.use(express.json())
+
+const gm = new GameManager()
+
+// New GET endpoint to list lobbies
+app.get('/lobbies', (req, res) => {
+    const lobbyList = Array.from(gm.lobbies()).map(lobby => ({
+        id: lobby.id,
+    }));
+
+    res.json({
+        lobbies: lobbyList,
+    });
+});
 
 wss.on('connection', (ws) => {
-    console.log('New client connected');
-    const clientID = generateUniqueId()
-    clients.set(clientID, ws)
-    console.log(`clients: ${clients.size}`)
 
     ws.on('message', (message: string) => {
         console.log(`got message ${message}`)
-        const clientMsg: ClientMessage = ClientIntentMessageSchema.parse(JSON.parse(message))
-        if (clientMsg.type == "intent") {
-            intents.push(clientMsg.intent)
+        const clientMsg: ClientMessage = ClientMessageSchema.parse(JSON.parse(message))
+        if (clientMsg.type == "join") {
+            gm.addClientToLobby(new Client(clientMsg.clientID, ws), clientMsg.lobbyID)
         }
     })
+
 });
 
 function runGame() {
+    gm.addLobby(new Lobby("123", 10 * 1000))
     setInterval(() => tick(), 1000);
 }
 
 function tick() {
-    console.log('ticking!')
-    //console.log(`clients: ${clients.size}`)
-    const sync = JSON.stringify(
-        ServerSyncMessageSchema.parse({
-            type: 'sync',
-            intents: intents
-        })
-    )
-    intents = []
-    for (const [clientId, ws] of clients) {
-        // console.log(`Client ID: ${clientId}`);
-        //console.log(`sending sync ${sync}`)
-        ws.send(sync)
-        // Do something with the WebSocket (ws)
-    }
+    gm.tick()
 }
 
 const PORT = process.env.PORT || 3000;
@@ -70,6 +65,3 @@ server.listen(PORT, () => {
 
 runGame()
 
-function generateUniqueId(): string {
-    return crypto.randomBytes(16).toString('hex');
-}

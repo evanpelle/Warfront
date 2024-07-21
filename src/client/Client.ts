@@ -2,6 +2,7 @@ import {TerrainMap} from "../core/GameStateApi";
 import {ServerMessage, ServerMessageSchema} from "../core/Schemas";
 import {defaultSettings} from "../core/Settings";
 import {loadTerrainMap} from "../core/TerrainMapLoader";
+import {generateUniqueID} from "../core/Utils";
 import {ClientGame, createClientGame} from "./ClientGame";
 import {v4 as uuidv4} from 'uuid';
 
@@ -13,19 +14,18 @@ class Client {
     private terrainMap: Promise<TerrainMap>
     private game: ClientGame
 
+    private lobbiesContainer: HTMLElement | null;
+    private lobbiesInterval: NodeJS.Timeout | null = null;
+
     constructor() {
         this.startButton = document.getElementById('startButton') as HTMLButtonElement | null;
+        this.lobbiesContainer = document.getElementById('lobbies-container');
+
     }
 
     initialize(): void {
         this.terrainMap = loadTerrainMap()
-        // Usage
-        if (this.startButton) {
-            this.startButton.addEventListener('click', this.handleStartClick.bind(this));
-        } else {
-            console.error('Start button not found');
-        }
-        this.connectWebSocket()
+        this.startLobbyPolling()
     }
 
     private connectWebSocket(): void {
@@ -36,34 +36,61 @@ class Client {
             console.log('Connected to server');
         };
 
-        this.socket.onmessage = (event) => {
-            console.log('Message from server:', event.data);
-            if (this.game != null) {
-                console.log(`got event: ${event.data}`)
-                const message: ServerMessage = ServerMessageSchema.parse(JSON.parse(event.data))
-                if (message.type == 'sync') {
-                    this.game.addIntents(message.intents)
-                    this.game.tick(null)
-                }
-            }
-        };
-
         this.socket.onclose = () => {
             console.log('Disconnected from server');
         };
     }
 
-    private handleStartClick(): void {
-        console.log('Game started!');
-        this.terrainMap.then((map) => {
-            this.game = createClientGame(uuidv4().slice(0, 4), this.socket, defaultSettings, map)
-            this.game.start()
-        })
+    private startLobbyPolling(): void {
+        this.fetchAndUpdateLobbies(); // Fetch immediately on start
+        this.lobbiesInterval = setInterval(() => this.fetchAndUpdateLobbies(), 1000);
+    }
 
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            //console.log('sending game started message')
-            // this.socket.send('Game started');
+    private async fetchAndUpdateLobbies(): Promise<void> {
+        try {
+            const data = await this.fetchLobbies();
+            this.updateLobbiesDisplay(data.lobbies);
+        } catch (error) {
+            console.error('Error fetching and updating lobbies:', error);
         }
+    }
+
+    private updateLobbiesDisplay(lobbies: Array<{id: string}>): void {
+        if (!this.lobbiesContainer) return;
+
+        this.lobbiesContainer.innerHTML = ''; // Clear existing lobbies
+
+        lobbies.forEach(lobby => {
+            console.log("creating button!")
+            const button = document.createElement('button');
+            button.textContent = `Join Lobby ${lobby.id}`;
+            button.onclick = () => this.joinLobby(lobby.id);
+            this.lobbiesContainer.appendChild(button);
+        });
+    }
+
+    async fetchLobbies() {
+        const url = '/lobbies';
+        console.log(`Fetching lobbies from: ${url}`);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log(`Received lobbies data:`, data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching lobbies:', error);
+            throw error;
+        }
+    }
+
+    private async joinLobby(lobbyID: string) {
+        this.terrainMap.then((map) => {
+            this.game = createClientGame(uuidv4().slice(0, 4), generateUniqueID(), lobbyID, defaultSettings, map)
+            this.game.joinLobby()
+        })
     }
 }
 

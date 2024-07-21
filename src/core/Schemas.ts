@@ -4,16 +4,19 @@ export type Intent = SpawnIntent | AttackIntent
 export type AttackIntent = z.infer<typeof AttackIntentSchema>
 export type SpawnIntent = z.infer<typeof SpawnIntentSchema>
 
+export type Turn = z.infer<typeof TurnSchema>
+
 
 export type ClientMessage = ClientIntentMessage | ClientJoinMessage
-export type ServerMessage = ServerSyncMessage | ServerGameMessage
+export type ServerMessage = ServerSyncMessage | ServerStartGameMessage
 
-export type ServerSyncMessage = z.infer<typeof ServerSyncMessageSchema>
-export type ServerGameMessage = z.infer<typeof ServerGameMessageSchema>
+export type ServerSyncMessage = z.infer<typeof ServerTurnMessageSchema>
+export type ServerStartGameMessage = z.infer<typeof ServerStartGameMessageSchema>
 
 
 export type ClientIntentMessage = z.infer<typeof ClientIntentMessageSchema>
 export type ClientJoinMessage = z.infer<typeof ClientJoinMessageSchema>
+
 
 
 // Zod schemas
@@ -39,24 +42,28 @@ export const SpawnIntentSchema = BaseIntentSchema.extend({
 
 const IntentSchema = z.union([AttackIntentSchema, SpawnIntentSchema]);
 
+const TurnSchema = z.object({
+    turnNumber: z.number(),
+    intents: z.array(IntentSchema)
+})
+
 // Server
 
 const ServerBaseMessageSchema = z.object({
     type: z.string()
 })
 
-export const ServerSyncMessageSchema = ServerBaseMessageSchema.extend({
-    type: z.literal('sync'),
-    intents: z.array(IntentSchema)
+export const ServerTurnMessageSchema = ServerBaseMessageSchema.extend({
+    type: z.literal('turn'),
+    turn: TurnSchema,
 })
 
-export const ServerGameMessageSchema = ServerBaseMessageSchema.extend({
-    type: z.literal('game'),
-    game: z.string()
+export const ServerStartGameMessageSchema = ServerBaseMessageSchema.extend({
+    type: z.literal('start'),
 })
 
 
-export const ServerMessageSchema = z.union([ServerSyncMessageSchema, ServerGameMessageSchema]);
+export const ServerMessageSchema = z.union([ServerTurnMessageSchema, ServerStartGameMessageSchema]);
 
 
 // Client
@@ -67,15 +74,15 @@ const ClientBaseMessageSchema = z.object({
 
 export const ClientIntentMessageSchema = ClientBaseMessageSchema.extend({
     type: z.literal('intent'),
+    clientID: z.string(),
+    gameID: z.string(),
     intent: IntentSchema
 })
 
 export const ClientJoinMessageSchema = ClientBaseMessageSchema.extend({
-    type: z.literal('join')
+    type: z.literal('join'),
+    clientID: z.string(),
+    lobbyID: z.string()
 })
 
 export const ClientMessageSchema = z.union([ClientIntentMessageSchema, ClientJoinMessageSchema]);
-
-export class Hi {
-
-}

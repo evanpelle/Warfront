@@ -48,6 +48,12 @@ export default {
 				target: 'ws://localhost:3000',
 				ws: true,
 			},
+			{
+				context: ['/lobbies', '/join_game', '/join_lobby'], // Add any other API endpoints here
+				target: 'http://localhost:3000',
+				secure: false,
+				changeOrigin: true,
+			}
 		],
 	},
 };

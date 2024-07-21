@@ -4,7 +4,9 @@ export type ClientID = string
 
 export type PlayerID = number // TODO: make string?
 
-export type ServerID = string
+export type GameID = string
+
+export type LobbyID = string
 
 export class Cell {
     constructor(

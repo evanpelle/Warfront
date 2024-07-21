@@ -1,32 +1,46 @@
 import {AttackExecution, Executor} from "../core/Executor";
-import {Cell, GameState, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TileEvent} from "../core/GameStateApi";
+import {Cell, ClientID, GameState, LobbyID, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TileEvent} from "../core/GameStateApi";
 import {CreateGameState} from "../core/GameStateImpl";
 import {Ticker, TickEvent} from "../core/Ticker";
 import {EventBus} from "../core/EventBus";
 import {Settings} from "../core/Settings";
 import {GameRenderer} from "./GameRenderer";
 import {InputHandler, ClickEvent, ZoomEvent, DragEvent} from "./InputHandler"
-import {ClientIntentMessageSchema, ClientMessageSchema, ServerSyncMessage} from "../core/Schemas";
+import {ClientIntentMessageSchema, ClientJoinMessageSchema, ClientMessageSchema, ServerMessage, ServerMessageSchema, ServerSyncMessage, Turn} from "../core/Schemas";
 import {AttackIntent, Intent, SpawnIntent} from "../core/Schemas";
 
 
 
-export function createClientGame(name: string, socket: WebSocket, settings: Settings, terrainMap: TerrainMap): ClientGame {
+export function createClientGame(name: string, clientID: ClientID, lobbyID: LobbyID, settings: Settings, terrainMap: TerrainMap): ClientGame {
     let eventBus = new EventBus()
     let gs = CreateGameState(terrainMap, eventBus)
     let gameRenderer = new GameRenderer(gs, settings.theme(), document.createElement("canvas"))
     let ticker = new Ticker(settings.tickIntervalMs(), eventBus)
 
-    return new ClientGame(name, socket, ticker, eventBus, gs, gameRenderer, new InputHandler(eventBus), new Executor(gs))
+    return new ClientGame(
+        name,
+        clientID,
+        lobbyID,
+        ticker,
+        eventBus,
+        gs,
+        gameRenderer,
+        new InputHandler(eventBus),
+        new Executor(gs)
+    )
 }
 
 export class ClientGame {
 
     private myPlayer: PlayerView
+    private turns: Turn[] = []
+    private socket: WebSocket
+    private started = false
 
     constructor(
         private playerName: string,
-        private socket: WebSocket,
+        private id: ClientID,
+        private lobbyID: LobbyID,
         private ticker: Ticker,
         private eventBus: EventBus,
         private gs: GameState,
@@ -35,7 +49,33 @@ export class ClientGame {
         private executor: Executor
     ) { }
 
+    public joinLobby() {
+        this.socket = new WebSocket(`ws://localhost:3000`)
+        this.socket.onopen = () => {
+            console.log('Connected to server!');
+            this.socket.send(
+                JSON.stringify(
+                    ClientJoinMessageSchema.parse({
+                        type: "join",
+                        lobbyID: this.lobbyID,
+                        clientID: this.id
+                    })
+                )
+            )
+        };
+        this.socket.onmessage = (event: MessageEvent) => {
+            const message: ServerMessage = ServerMessageSchema.parse(JSON.parse(event.data))
+            if (message.type == "start") {
+                console.log("starting game!")
+            }
+            if (message.type == "turn") {
+                this.addTurn(message.turn)
+            }
+        };
+    }
+
     public start() {
+        this.started = true
         console.log('starting game!')
         // TODO: make each class do this, or maybe have client intercept all requests?
         this.eventBus.on(TickEvent, (e) => this.tick(e))
@@ -51,14 +91,12 @@ export class ClientGame {
         this.ticker.start()
     }
 
-    public sync(s: ServerSyncMessage): void {
-        s.intents.forEach(i => {
-            this.executor.addIntent(i)
-        })
-    }
-
-    public addIntents(intents: Intent[]): void {
-        intents.forEach(i => this.executor.addIntent(i))
+    public addTurn(turn: Turn): void {
+        if (turn.turnNumber != this.turns.length) {
+            throw new Error(`received turn ${turn.turnNumber}, have ${this.turns.length} turns`)
+        }
+        this.turns.push(turn)
+        turn.intents.forEach(i => this.executor.addIntent(i))
     }
 
     public tick(tickEvent: TickEvent) {
