@@ -75,7 +75,7 @@ const ClientBaseMessageSchema = z.object({
 export const ClientIntentMessageSchema = ClientBaseMessageSchema.extend({
     type: z.literal('intent'),
     clientID: z.string(),
-    gameID: z.string(),
+    //gameID: z.string(),
     intent: IntentSchema
 })
 

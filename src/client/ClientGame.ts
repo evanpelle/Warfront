@@ -52,7 +52,7 @@ export class ClientGame {
     public joinLobby() {
         this.socket = new WebSocket(`ws://localhost:3000`)
         this.socket.onopen = () => {
-            console.log('Connected to server!');
+            console.log('Connected to game server!');
             this.socket.send(
                 JSON.stringify(
                     ClientJoinMessageSchema.parse({
@@ -67,6 +67,7 @@ export class ClientGame {
             const message: ServerMessage = ServerMessageSchema.parse(JSON.parse(event.data))
             if (message.type == "start") {
                 console.log("starting game!")
+                this.start()
             }
             if (message.type == "turn") {
                 this.addTurn(message.turn)
@@ -140,6 +141,7 @@ export class ClientGame {
         const spawn = JSON.stringify(
             ClientIntentMessageSchema.parse({
                 type: "intent",
+                clientID: this.id,
                 intent: {
                     type: "spawn",
                     name: this.playerName,
@@ -162,6 +164,7 @@ export class ClientGame {
         const attack = JSON.stringify(
             ClientIntentMessageSchema.parse({
                 type: "intent",
+                clientID: this.id,
                 intent: {
                     type: "attack",
                     attackerID: this.myPlayer.id(),

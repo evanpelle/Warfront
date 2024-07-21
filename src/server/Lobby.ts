@@ -14,4 +14,8 @@ export class Lobby {
     public addClient(client: Client) {
         this.clients.set(client.id, client)
     }
+
+    public isExpired(now: number): boolean {
+        return now > this.startGameTs
+    }
 }

@@ -8,8 +8,8 @@ import {Client} from "./Client";
 export class GameServer {
 
     private currTurn = 0
-    private turns: Turn[]
-    private intents: Intent[]
+    private turns: Turn[] = []
+    private intents: Intent[] = []
 
     constructor(
         public readonly id: GameID,
@@ -21,7 +21,6 @@ export class GameServer {
     public start() {
         this.clients.forEach(c => {
             c.ws.on('message', (message: string) => {
-                console.log(`got message ${message}`)
                 const clientMsg: ClientMessage = ClientMessageSchema.parse(JSON.parse(message))
                 if (clientMsg.type == "intent") {
                     this.addIntent(clientMsg.intent)
@@ -38,6 +37,7 @@ export class GameServer {
         this.clients.forEach(c => {
             c.ws.send(startGame)
         })
+        setInterval(() => this.endTurn(), 1000);
     }
 
     private addIntent(intent: Intent) {
@@ -51,10 +51,16 @@ export class GameServer {
         }
         this.turns.push(pastTurn)
         this.intents = []
+
+        const msg = JSON.stringify(ServerTurnMessageSchema.parse(
+            {
+                type: "turn",
+                turn: pastTurn
+            }
+        ))
         this.clients.forEach(c => {
-            c.ws.send(JSON.stringify(
-                ServerTurnMessageSchema.parse(pastTurn)
-            ))
+            console.log(`sending end turn to ${c.id}`)
+            c.ws.send(msg)
         })
     }
 

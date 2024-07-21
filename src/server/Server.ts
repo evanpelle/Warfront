@@ -41,6 +41,7 @@ wss.on('connection', (ws) => {
         console.log(`got message ${message}`)
         const clientMsg: ClientMessage = ClientMessageSchema.parse(JSON.parse(message))
         if (clientMsg.type == "join") {
+            // TOOD: fix this
             gm.addClientToLobby(new Client(clientMsg.clientID, ws), clientMsg.lobbyID)
         }
     })
@@ -48,7 +49,6 @@ wss.on('connection', (ws) => {
 });
 
 function runGame() {
-    gm.addLobby(new Lobby("123", 10 * 1000))
     setInterval(() => tick(), 1000);
 }
 

@@ -28,19 +28,6 @@ class Client {
         this.startLobbyPolling()
     }
 
-    private connectWebSocket(): void {
-        console.log(`connecting websocket ws://${window.location.host}...`)
-        this.socket = new WebSocket(`ws://localhost:3000`);
-
-        this.socket.onopen = () => {
-            console.log('Connected to server');
-        };
-
-        this.socket.onclose = () => {
-            console.log('Disconnected from server');
-        };
-    }
-
     private startLobbyPolling(): void {
         this.fetchAndUpdateLobbies(); // Fetch immediately on start
         this.lobbiesInterval = setInterval(() => this.fetchAndUpdateLobbies(), 1000);
@@ -61,7 +48,6 @@ class Client {
         this.lobbiesContainer.innerHTML = ''; // Clear existing lobbies
 
         lobbies.forEach(lobby => {
-            console.log("creating button!")
             const button = document.createElement('button');
             button.textContent = `Join Lobby ${lobby.id}`;
             button.onclick = () => this.joinLobby(lobby.id);
@@ -71,14 +57,12 @@ class Client {
 
     async fetchLobbies() {
         const url = '/lobbies';
-        console.log(`Fetching lobbies from: ${url}`);
         try {
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
             }
             const data = await response.json();
-            console.log(`Received lobbies data:`, data);
             return data;
         } catch (error) {
             console.error('Error fetching lobbies:', error);

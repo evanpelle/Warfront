@@ -6,6 +6,10 @@ import {defaultSettings} from "../core/Settings";
 import {generateUniqueID} from "../core/Utils";
 
 export class GameManager {
+
+    private lastNewLobby: number = 0
+    private newLobbyCreationRateMs = 1 * 1000
+
     private _lobbies: Map<LobbyID, Lobby> = new Map()
 
     private games: Map<GameID, GameServer> = new Map()
@@ -38,6 +42,20 @@ export class GameManager {
     }
 
     tick() {
-        
+        const now = Date.now()
+
+        const active = this.lobbies().filter(l => !l.isExpired(now))
+        const expired = this.lobbies().filter(l => l.isExpired(now))
+        this._lobbies = new Map(active.map(lobby => [lobby.id, lobby]));
+        expired.forEach(lobby => {
+            const game = new GameServer(generateUniqueID(), lobby.clients, defaultSettings)
+            this.games.set(game.id, game)
+            game.start()
+        })
+
+        if (now > this.lastNewLobby + this.newLobbyCreationRateMs) {
+            this.lastNewLobby = now
+            this.addLobby(new Lobby(generateUniqueID(), 10 * 1000))
+        }
     }
 }
