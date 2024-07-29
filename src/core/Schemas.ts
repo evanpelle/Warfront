@@ -29,6 +29,8 @@ export const AttackIntentSchema = BaseIntentSchema.extend({
     attackerID: z.number(),
     targetID: z.number().nullable(),
     troops: z.number(),
+    targetX: z.number(),
+    targetY: z.number()
 });
 
 

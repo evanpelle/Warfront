@@ -1,6 +1,9 @@
+import PriorityQueue from "priority-queue-typescript";
 import {Cell, Execution, GameState, GameStateView, Player, PlayerInfo, TerrainTypes, Tile} from "./GameStateApi";
 import {PseudoRandom} from "./PseudoRandom";
-import {AttackIntent, Intent, SpawnIntent} from "./Schemas";
+import {AttackIntent, Intent, SpawnIntent, Turn} from "./Schemas";
+import {manhattanDist} from "./Utils";
+
 
 export class Executor {
 
@@ -16,6 +19,10 @@ export class Executor {
         return player
     }
 
+    addTurn(turn: Turn) {
+        turn.intents.forEach(i => this.addIntent(i))
+    }
+
     addIntent(intent: Intent) {
         switch (intent.type) {
             case "attack":
@@ -23,7 +30,8 @@ export class Executor {
                     new AttackExecution(
                         intent.troops,
                         this.gs.player(intent.attackerID),
-                        intent.targetID != null ? this.gs.player(intent.targetID) : null
+                        intent.targetID != null ? this.gs.player(intent.targetID) : null,
+                        new Cell(intent.targetX, intent.targetY)
                     )
                 )
             case "spawn":
@@ -46,7 +54,7 @@ export class Executor {
 
     tick() {
         this.gs.executions().forEach(e => e.tick())
-        this.gs.executions().filter(e => e.isActive())
+        this.gs.removeInactiveExecutions()
     }
 }
 
@@ -80,45 +88,82 @@ export class SpawnExecution implements Execution {
     }
 }
 
+class TileContainer {
+    constructor(public readonly tile: Tile, public readonly priority: number) { }
+}
+
 export class AttackExecution implements Execution {
     private active: boolean = true;
-    private enemyBorders: Tile[] = []
+    private toConquer: PriorityQueue<TileContainer> = new PriorityQueue<TileContainer>(11, (a: TileContainer, b: TileContainer) => a.priority - b.priority);
+    private random = new PseudoRandom(123)
 
-    constructor(private troops: number, private _owner: Player, private target: Player) { }
+    constructor(private troops: number, private _owner: Player, private target: Player, private targetCell: Cell) { }
 
     tick() {
         if (!this.active) {
             return
         }
-        if (this.troops < 1) {
-            this.active = false
-            return
-        }
 
-        if (this.enemyBorders.length == 0) {
-            const border = this.owner().borderTilesWith(this.target)
-            if (border.size == 0) {
+        let numTilesPerTick = this._owner.borderTilesWith(this.target).size / 2
+        while (numTilesPerTick > 0) {
+            if (this.troops < 1) {
                 this.active = false
                 return
             }
-            for (const b of border) {
-                b.neighbors().filter(t => t.terrain() == TerrainTypes.Land).filter(t => t.owner() == this.target).forEach(t => this.enemyBorders.push(t))
-            }
-        }
 
-        let tile: Tile = null
-        while (true) {
-            if (this.enemyBorders.length == 0) {
+            if (this.toConquer.size() == 0) {
+                this.calculateToConquer()
+            }
+            if (this.toConquer.size() == 0) {
+                this.active = false
+                this._owner.addTroops(this.troops)
                 return
             }
-            tile = this.enemyBorders.pop()
-            if (tile.owner() == this.target) {
-                break
+
+            const tileToConquer: Tile = this.toConquer.poll().tile
+            const onBorder = tileToConquer.neighbors().filter(t => t.owner() == this._owner).length > 0
+            if (tileToConquer.owner() != this.target || !onBorder) {
+                continue
             }
+            this._owner.conquer(tileToConquer.cell())
+            this.troops -= 1
+            numTilesPerTick -= 1
+        }
+    }
+
+    private calculateToConquer() {
+        const border = this.owner().borderTilesWith(this.target)
+        const enemyBorder: Set<Tile> = new Set()
+        for (const b of border) {
+            b.neighbors()
+                .filter(t => t.terrain() == TerrainTypes.Land)
+                .filter(t => t.owner() == this.target)
+                .forEach(t => enemyBorder.add(t))
         }
 
-        this.troops -= 1
-        this.owner().conquer(tile.cell())
+        // let closestTile: Tile;
+        // let closestDist: number = Number.POSITIVE_INFINITY;
+        // for (const enemyTile of enemyBorder) {
+        //     const dist = manhattanDist(enemyTile.cell(), this.targetCell)
+        //     if (dist < closestDist) {
+        //         closestTile = enemyTile
+        //     }
+        // }
+        const tileByDist = Array.from(enemyBorder).slice().sort((a, b) => manhattanDist(a.cell(), this.targetCell) - manhattanDist(b.cell(), this.targetCell))
+
+        // tileByDist.forEach(t => console.log(`tile dist: ${manhattanDist(t.cell(), closestTile.cell())}`))
+
+        for (let i = 0; i < Math.min(enemyBorder.size / 2, tileByDist.length); i++) {
+            const enemyTile = tileByDist[i]
+            const numOwnedByMe = enemyTile.neighbors()
+                .filter(t => t.terrain() == TerrainTypes.Land)
+                .filter(t => t.owner() == this._owner)
+                .length
+            // this.toConquer.add(new TileContainer(enemyTile, numOwnedByMe + (this.random.next() % 5) + (-5 * i / tileByDist.length)))
+            const r = this.random.next() % 4
+            this.toConquer.add(new TileContainer(enemyTile, r - numOwnedByMe))
+        }
+
     }
 
     owner(): Player {

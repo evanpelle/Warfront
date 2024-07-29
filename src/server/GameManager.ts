@@ -2,18 +2,23 @@ import {GameID, LobbyID} from "../core/GameStateApi";
 import {Client} from "./Client";
 import {Lobby} from "./Lobby";
 import {GameServer} from "./GameServer";
-import {defaultSettings} from "../core/Settings";
+import {defaultSettings, Settings} from "../core/Settings";
 import {generateUniqueID} from "../core/Utils";
 
 export class GameManager {
 
     private lastNewLobby: number = 0
-    private newLobbyCreationRateMs = 1 * 1000
 
     private _lobbies: Map<LobbyID, Lobby> = new Map()
 
     private games: Map<GameID, GameServer> = new Map()
 
+    constructor(private settings: Settings) { }
+
+
+    public hasLobby(lobbyID: LobbyID): boolean {
+        return this._lobbies.has(lobbyID)
+    }
 
     public addClientToLobby(client: Client, lobbyID: LobbyID) {
         this._lobbies.get(lobbyID).addClient(client)
@@ -48,14 +53,14 @@ export class GameManager {
         const expired = this.lobbies().filter(l => l.isExpired(now))
         this._lobbies = new Map(active.map(lobby => [lobby.id, lobby]));
         expired.forEach(lobby => {
-            const game = new GameServer(generateUniqueID(), lobby.clients, defaultSettings)
+            const game = new GameServer(generateUniqueID(), lobby.clients, this.settings)
             this.games.set(game.id, game)
             game.start()
         })
 
-        if (now > this.lastNewLobby + this.newLobbyCreationRateMs) {
+        if (now > this.lastNewLobby + this.settings.lobbyCreationRate()) {
             this.lastNewLobby = now
-            this.addLobby(new Lobby(generateUniqueID(), 10 * 1000))
+            this.addLobby(new Lobby(generateUniqueID(), this.settings.lobbyLifetime()))
         }
     }
 }

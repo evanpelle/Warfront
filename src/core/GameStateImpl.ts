@@ -1,21 +1,21 @@
 import {EventBus} from "./EventBus";
-import {Cell, Execution, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, Tile, TileEvent} from "./GameStateApi";
+import {Cell, Execution, GameState, GameStateView, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TerrainType, TerrainTypes, TerraNullius, Tile, TileEvent} from "./GameStateApi";
 
 export function CreateGameState(terrainMap: TerrainMap, eventBus: EventBus): GameState {
     return new GameStateImpl(terrainMap, eventBus)
 }
 
-export class TileImpl implements Tile {
-    public _owner: PlayerImpl | null = null
+class TileImpl implements Tile {
 
     constructor(
         private readonly gs: GameStateImpl,
+        public _owner: PlayerImpl | TerraNullius,
         private readonly _cell: Cell,
         private readonly _terrain: TerrainType
     ) { }
 
     hasOwner(): boolean {return this._owner != null}
-    owner(): Player | null {return this._owner}
+    owner(): Player | TerraNullius {return this._owner}
     isBorder(): boolean {return this.gs.isBorder(this)}
     isInterior(): boolean {return this.hasOwner() && !this.isBorder()}
     cell(): Cell {return this._cell}
@@ -29,11 +29,19 @@ export class TileImpl implements Tile {
 }
 
 class PlayerImpl implements Player {
+
+    public _borderTiles: Map<Cell, Tile> = new Map()
+    public _borderWith: Map<PlayerID, Set<Tile>>
     public tiles: Map<Cell, Tile> = new Map<Cell, Tile>()
     public isAliveField = true
 
     constructor(private gs: GameStateImpl, public readonly _id: PlayerID, public readonly playerInfo: PlayerInfo, private _troops) { }
 
+    addTroops(troops: number): void {
+        this._troops += troops
+    }
+
+    isPlayer(): this is Player {return true as const}
     ownsTile(cell: Cell): boolean {return this.tiles.has(cell)}
     setTroops(troops: number) {this._troops = troops}
     conquer(cell: Cell) {this.gs.conquer(this, cell)}
@@ -45,21 +53,14 @@ class PlayerImpl implements Player {
     executions(): Execution[] {
         return this.gs.executions().filter(exec => exec.owner().id() == this.id())
     }
-    borderTiles(): ReadonlySet<Tile> {
-        // TODO: make this more efficient.
-        const border: Set<Tile> = new Set()
-        for (const tile of this.tiles.values()) {
-            if (tile.isBorder()) {
-                border.add(tile)
-            }
-        }
-        return border
-    }
 
-    borderTilesWith(other: PlayerView): ReadonlySet<Tile> {
-        const borderWith: Set<Tile> = new Set()
-        for (const tile of this.tiles.values()) {
-            if (tile.isBorder() && tile.neighbors().filter(t => t.owner() == other).length > 0) {
+    borderTilesWith(other: Player): ReadonlySet<Tile> {
+        if (!this._borderWith.has(other.id())) {
+            return new Set()
+        }
+        return this._borderWith.get(other.id())
+        for (const tile of this._borderTiles.values()) {
+            if (tile.neighbors().filter(t => t.owner() == other).length > 0) {
                 borderWith.add(tile)
             }
         }
@@ -93,8 +94,10 @@ class GameStateImpl implements GameState {
     private execs: Execution[] = []
     private _width: number
     private _height: number
+    private terraNullius: TerraNulliusImpl
 
     constructor(terrainMap: TerrainMap, private eventBus: EventBus) {
+        this.terraNullius = new TerraNulliusImpl(this)
         this._width = terrainMap.width();
         this._height = terrainMap.height();
         this.map = new Array(this._width);
@@ -102,10 +105,15 @@ class GameStateImpl implements GameState {
             this.map[x] = new Array(this._height);
             for (let y = 0; y < this._height; y++) {
                 let cell = new Cell(x, y);
-                this.map[x][y] = new TileImpl(this, cell, terrainMap.terrain(cell));
+                this.map[x][y] = new TileImpl(this, this.terraNullius, cell, terrainMap.terrain(cell));
             }
         }
     }
+
+    removeInactiveExecutions(): void {
+        this.execs = this.execs.filter(e => e.isActive())
+    }
+
     players(): Player[] {
         return Array.from(this._players.values())
     }
@@ -138,7 +146,7 @@ class GameStateImpl implements GameState {
         }
     }
 
-    playerView(id: PlayerID): PlayerView {
+    playerView(id: PlayerID): Player {
         return this.player(id)
     }
 
@@ -194,18 +202,34 @@ class GameStateImpl implements GameState {
         if (owner.ownsTile(cell)) {
             throw new Error(`Player ${owner} already owns cell ${cell}`)
         }
+        if (!owner.isPlayer()) {
+            throw new Error("Must be a player")
+        }
         let tile = this.map[cell.x][cell.y]
         let previousOwner = tile._owner
-        if (previousOwner != null) {
+        if (previousOwner.isPlayer()) {
             previousOwner.tiles.delete(cell)
         }
         tile._owner = owner
         owner.tiles.set(cell, tile)
+        this.updateBorders(cell)
         this.eventBus.emit(new TileEvent(tile))
-        // TODO: update for borders
     }
 
-    isBorder(tile: TileImpl): boolean {
+    private updateBorders(cell: Cell) {
+        const cells: Cell[] = []
+        cells.push(cell)
+        this.neighbors(cell).forEach(c => cells.push(cell))
+        cells.map(c => this.tile(c)).filter(c => c.hasOwner()).forEach(t => {
+            if (this.isBorder(t)) {
+                (t.owner() as PlayerImpl)._borderTiles.set(t.cell(), t)
+            } else {
+                (t.owner() as PlayerImpl)._borderTiles.delete(t.cell())
+            }
+        })
+    }
+
+    isBorder(tile: Tile): boolean {
         this.assertIsOnMap(tile.cell())
         if (!tile.hasOwner()) {
             return false
@@ -220,3 +244,19 @@ class GameStateImpl implements GameState {
         return false
     }
 }
+
+class TerraNulliusImpl implements TerraNullius {
+
+    constructor(private gs: GameState) { }
+
+    id(): PlayerID {
+        throw new Error("Method not implemented.");
+    }
+    ownsTile(cell: Cell): boolean {
+        throw new Error("Method not implemented.");
+    }
+    borderTilesWith(other: PlayerView): ReadonlySet<Tile> {
+        throw new Error("Method not implemented.");
+    }
+    isPlayer(): false {return false as const}
+} 

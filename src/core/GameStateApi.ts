@@ -56,7 +56,7 @@ export interface TerrainMap {
 }
 
 export interface Tile {
-    owner(): PlayerView | null
+    owner(): PlayerView | TerraNullius
     hasOwner(): boolean
     isBorder(): boolean
     isInterior(): boolean
@@ -64,6 +64,13 @@ export interface Tile {
     terrain(): Terrain
     gameState(): GameStateView
     neighbors(): Tile[]
+}
+
+export interface TerraNullius {
+    id(): PlayerID
+    ownsTile(cell: Cell): boolean
+    borderTilesWith(other: PlayerView): ReadonlySet<Tile>
+    isPlayer(): false
 }
 
 export interface PlayerView {
@@ -74,12 +81,13 @@ export interface PlayerView {
     isAlive(): boolean
     gameState(): GameStateView
     executions(): ExecutionView[]
-    borderTiles(): ReadonlySet<Tile>
     borderTilesWith(other: PlayerView): ReadonlySet<Tile>
+    isPlayer(): this is PlayerView
 }
 
 export interface Player extends PlayerView {
     setTroops(troops: number): void
+    addTroops(troops: number): void
     conquer(cell: Cell): void
     gameState(): GameState
     executions(): Execution[]
@@ -102,6 +110,7 @@ export interface GameState extends GameStateView {
     players(): Player[]
     addPlayer(playerInfo: PlayerInfo): Player
     executions(): Execution[]
+    removeInactiveExecutions(): void
     addExecution(exec: Execution)
     removeExecution(exec: Execution)
 }

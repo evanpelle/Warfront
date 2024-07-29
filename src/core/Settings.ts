@@ -3,8 +3,11 @@ import {Colord, colord} from "colord";
 
 export interface Settings {
 	theme(): Theme;
-	tickIntervalMs(): number;
-	syncIntervalMs(): number;
+	turnIntervalMs(): number
+	tickIntervalMs(): number
+	ticksPerTurn(): number
+	lobbyCreationRate(): number
+	lobbyLifetime(): number
 }
 
 export interface Theme {
@@ -17,14 +20,22 @@ export interface Theme {
 }
 
 export const defaultSettings = new class implements Settings {
+	ticksPerTurn(): number {
+		return 1
+	}
+	turnIntervalMs(): number {
+		return 1000 / 10
+	}
+	lobbyCreationRate(): number {
+		return 5 * 1000
+	}
+	lobbyLifetime(): number {
+		return 2 * 1000
+	}
 	theme(): Theme {return pastelTheme;}
 
 	tickIntervalMs(): number {
 		return 1000 / 20; // 50ms
-	}
-
-	syncIntervalMs(): number {
-		return 1000 / 3; // 3 syncs per second
 	}
 }
 

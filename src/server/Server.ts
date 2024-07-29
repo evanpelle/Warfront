@@ -7,6 +7,7 @@ import {GameManager} from './GameManager';
 import {Client} from './Client';
 import {ClientMessage, ClientMessageSchema} from '../core/Schemas';
 import {Lobby} from './Lobby';
+import {defaultSettings} from '../core/Settings';
 
 
 
@@ -22,7 +23,7 @@ const wss = new WebSocketServer({server});
 app.use(express.static(path.join(__dirname, '../../out')));
 app.use(express.json())
 
-const gm = new GameManager()
+const gm = new GameManager(defaultSettings)
 
 // New GET endpoint to list lobbies
 app.get('/lobbies', (req, res) => {
@@ -41,9 +42,11 @@ wss.on('connection', (ws) => {
         console.log(`got message ${message}`)
         const clientMsg: ClientMessage = ClientMessageSchema.parse(JSON.parse(message))
         if (clientMsg.type == "join") {
-            // TOOD: fix this
-            gm.addClientToLobby(new Client(clientMsg.clientID, ws), clientMsg.lobbyID)
+            if (gm.hasLobby(clientMsg.lobbyID)) {
+                gm.addClientToLobby(new Client(clientMsg.clientID, ws), clientMsg.lobbyID)
+            }
         }
+        // TODO: send error message
     })
 
 });

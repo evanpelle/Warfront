@@ -1,10 +1,17 @@
 import {EventBus, GameEvent} from "../core/EventBus";
 import {Cell} from "../core/GameStateApi";
 
-export class ClickEvent implements GameEvent {
+export class MouseUpEvent implements GameEvent {
     constructor(
         public readonly x: number,
-        public readonly y: number
+        public readonly y: number,
+    ) { }
+}
+
+export class MouseDownEvent implements GameEvent {
+    constructor(
+        public readonly x: number,
+        public readonly y: number,
     ) { }
 }
 
@@ -25,7 +32,10 @@ export class DragEvent implements GameEvent {
 
 export class InputHandler {
 
-    private isDragging: boolean = false;
+    private lastMouseDownX: number = 0
+    private lastMouseDownY: number
+
+    private isMouseDown: boolean = false;
     private lastMouseX: number = 0;
     private lastMouseY: number = 0;
 
@@ -33,6 +43,7 @@ export class InputHandler {
 
     initialize() {
         document.addEventListener("pointerdown", (e) => this.onPointerDown(e));
+        document.addEventListener("pointerup", (e) => this.onPointerUp(e));
         document.addEventListener("wheel", (e) => this.onScroll(e), {passive: false});
         document.addEventListener('mousedown', this.onMouseDown.bind(this));
         document.addEventListener('mousemove', this.onMouseMove.bind(this));
@@ -41,7 +52,16 @@ export class InputHandler {
     }
 
     onPointerDown(event: PointerEvent) {
-        this.eventBus.emit(new ClickEvent(event.x, event.y))
+        this.lastMouseDownX = event.x
+        this.lastMouseDownY = event.y
+        this.eventBus.emit(new MouseDownEvent(event.x, event.y))
+    }
+
+    onPointerUp(event: PointerEvent) {
+        const dist = Math.abs(event.x - this.lastMouseDownX) + Math.abs(event.y - this.lastMouseDownY);
+        if (dist < 10) {
+            this.eventBus.emit(new MouseUpEvent(event.x, event.y))
+        }
     }
 
     private onScroll(event: WheelEvent) {
@@ -49,13 +69,13 @@ export class InputHandler {
     }
 
     private onMouseDown(event: MouseEvent) {
-        this.isDragging = true;
+        this.isMouseDown = true;
         this.lastMouseX = event.clientX;
         this.lastMouseY = event.clientY;
     }
 
     private onMouseMove(event: MouseEvent) {
-        if (!this.isDragging) return;
+        if (!this.isMouseDown) return;
 
         const deltaX = event.clientX - this.lastMouseX;
         const deltaY = event.clientY - this.lastMouseY;
@@ -67,7 +87,7 @@ export class InputHandler {
     }
 
     private onMouseUp(event: MouseEvent) {
-        this.isDragging = false;
+        this.isMouseDown = false;
     }
 
 }

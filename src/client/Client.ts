@@ -9,6 +9,8 @@ import {v4 as uuidv4} from 'uuid';
 // import WebSocket from 'ws';
 
 class Client {
+    private hasJoined = false
+
     private startButton: HTMLButtonElement | null;
     private socket: WebSocket | null = null;
     private terrainMap: Promise<TerrainMap>
@@ -53,6 +55,12 @@ class Client {
             button.onclick = () => this.joinLobby(lobby.id);
             this.lobbiesContainer.appendChild(button);
         });
+
+        // Join first lobby
+        if (!this.hasJoined && lobbies.length > 0) {
+            this.hasJoined = true
+            this.joinLobby(lobbies[0].id)
+        }
     }
 
     async fetchLobbies() {

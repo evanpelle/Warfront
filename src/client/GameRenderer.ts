@@ -1,5 +1,5 @@
 import {Colord} from "colord";
-import {Cell, GameStateView, PlayerEvent, Tile, TileEvent} from "../core/GameStateApi";
+import {Cell, GameState, PlayerEvent, Tile, TileEvent} from "../core/GameStateApi";
 import {Theme} from "../core/Settings";
 import {DragEvent, ZoomEvent} from "./InputHandler";
 
@@ -14,7 +14,7 @@ export class GameRenderer {
 	private imageData: ImageData
 
 
-	constructor(private gs: GameStateView, private theme: Theme, private canvas: HTMLCanvasElement) {
+	constructor(private gs: GameState, private theme: Theme, private canvas: HTMLCanvasElement) {
 		this.context = canvas.getContext("2d")
 	}
 
@@ -72,7 +72,7 @@ export class GameRenderer {
 		tempCtx.putImageData(this.imageData, 0, 0);
 
 		// Disable image smoothing for pixelated effect
-		if (this.scale > 2) {
+		if (this.scale > 3) {
 			this.context.imageSmoothingEnabled = false;
 		} else {
 			this.context.imageSmoothingEnabled = true;
@@ -96,10 +96,13 @@ export class GameRenderer {
 			this.gs.width(),
 			this.gs.height()
 		);
+
+		requestAnimationFrame(() => this.renderGame());
 	}
 
 	tileUpdate(event: TileEvent) {
 		this.paintTile(event.tile)
+		this.gs.neighbors(event.tile.cell()).forEach(c => this.paintTile(this.gs.tile(c)))
 	}
 
 	playerUpdate(event: PlayerEvent) {
@@ -116,8 +119,11 @@ export class GameRenderer {
 		let terrainColor = this.theme.terrainColor(tile.terrain())
 		this.paintCell(tile.cell(), terrainColor)
 		if (tile.hasOwner()) {
-			let territoryColor = this.theme.territoryColor(tile.owner().id())
-			this.paintCell(tile.cell(), territoryColor)
+			if (tile.isBorder()) {
+				this.paintCell(tile.cell(), this.theme.territoryColor(tile.owner().id()))
+			} else {
+				this.paintCell(tile.cell(), this.theme.borderColor(tile.owner().id()))
+			}
 		}
 	}
 
@@ -150,8 +156,6 @@ export class GameRenderer {
 		// Adjust the offset
 		this.offsetX = zoomPointX - (canvasX - this.gs.width() / 2) / this.scale;
 		this.offsetY = zoomPointY - (canvasY - this.gs.height() / 2) / this.scale;
-
-		console.log("Zoom applied. Scale:", this.scale, "Offset:", this.offsetX, this.offsetY);
 	}
 
 	onMove(event: DragEvent) {

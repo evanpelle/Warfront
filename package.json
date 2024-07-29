@@ -30,6 +30,7 @@
     "jimp": "^0.22.12",
     "node-addon-api": "^8.1.0",
     "node-gyp": "^10.2.0",
+    "priority-queue-typescript": "^1.0.1",
     "typia": "^6.5.2",
     "ws": "^8.18.0",
     "zod": "^3.23.8"

@@ -7,7 +7,6 @@ import {Client} from "./Client";
 
 export class GameServer {
 
-    private currTurn = 0
     private turns: Turn[] = []
     private intents: Intent[] = []
 
@@ -37,7 +36,7 @@ export class GameServer {
         this.clients.forEach(c => {
             c.ws.send(startGame)
         })
-        setInterval(() => this.endTurn(), 1000);
+        setInterval(() => this.endTurn(), this.settings.turnIntervalMs());
     }
 
     private addIntent(intent: Intent) {
@@ -59,7 +58,6 @@ export class GameServer {
             }
         ))
         this.clients.forEach(c => {
-            console.log(`sending end turn to ${c.id}`)
             c.ws.send(msg)
         })
     }

@@ -1,11 +1,11 @@
 import {AttackExecution, Executor} from "../core/Executor";
-import {Cell, ClientID, GameState, LobbyID, Player, PlayerEvent, PlayerID, PlayerInfo, PlayerView, TerrainMap, TileEvent} from "../core/GameStateApi";
+import {Cell, ClientID, GameState, LobbyID, PlayerEvent, PlayerID, PlayerInfo, Player, TerrainMap, TileEvent, PlayerView} from "../core/GameStateApi";
 import {CreateGameState} from "../core/GameStateImpl";
 import {Ticker, TickEvent} from "../core/Ticker";
 import {EventBus} from "../core/EventBus";
 import {Settings} from "../core/Settings";
 import {GameRenderer} from "./GameRenderer";
-import {InputHandler, ClickEvent, ZoomEvent, DragEvent} from "./InputHandler"
+import {InputHandler, MouseUpEvent, ZoomEvent, DragEvent, MouseDownEvent} from "./InputHandler"
 import {ClientIntentMessageSchema, ClientJoinMessageSchema, ClientMessageSchema, ServerMessage, ServerMessageSchema, ServerSyncMessage, Turn} from "../core/Schemas";
 import {AttackIntent, Intent, SpawnIntent} from "../core/Schemas";
 
@@ -36,6 +36,11 @@ export class ClientGame {
     private turns: Turn[] = []
     private socket: WebSocket
     private started = false
+
+    private ticksPerTurn = 1
+
+    private ticksThisTurn = 0
+    private currTurn = 0
 
     constructor(
         private playerName: string,
@@ -79,30 +84,44 @@ export class ClientGame {
         this.started = true
         console.log('starting game!')
         // TODO: make each class do this, or maybe have client intercept all requests?
-        this.eventBus.on(TickEvent, (e) => this.tick(e))
+        //this.eventBus.on(TickEvent, (e) => this.tick(e))
         this.eventBus.on(TileEvent, (e) => this.renderer.tileUpdate(e))
         this.eventBus.on(PlayerEvent, (e) => this.playerEvent(e))
-        this.eventBus.on(ClickEvent, (e) => this.inputEvent(e))
+        this.eventBus.on(MouseUpEvent, (e) => this.inputEvent(e))
         this.eventBus.on(ZoomEvent, (e) => this.renderer.onZoom(e))
         this.eventBus.on(DragEvent, (e) => this.renderer.onMove(e))
 
         this.renderer.initialize()
         this.input.initialize()
         this.executor.spawnBots(500)
-        this.ticker.start()
+        // this.gs.players().filter(p => p.info().isBot).forEach(bot => {
+        //     this.executor.addIntent({
+        //         type: "attack",
+        //         attackerID: bot.id(),
+        //         targetID: null,
+        //         troops: 100
+        //     })
+        // })
+
+
+        setInterval(() => this.tick(), 10);
     }
 
     public addTurn(turn: Turn): void {
-        if (turn.turnNumber != this.turns.length) {
-            throw new Error(`received turn ${turn.turnNumber}, have ${this.turns.length} turns`)
-        }
         this.turns.push(turn)
-        turn.intents.forEach(i => this.executor.addIntent(i))
     }
 
-    public tick(tickEvent: TickEvent) {
-        this.gs.executions().forEach(e => e.tick())
-        this.renderer.renderGame()
+    public tick() {
+        if (this.ticksThisTurn >= this.ticksPerTurn) {
+            if (this.currTurn >= this.turns.length) {
+                return
+            }
+            this.executor.addTurn(this.turns[this.currTurn])
+            this.currTurn++
+            this.ticksThisTurn = 0
+        }
+        this.ticksThisTurn++
+        this.executor.tick()
     }
 
     private playerEvent(event: PlayerEvent) {
@@ -115,7 +134,7 @@ export class ClientGame {
         this.renderer.playerUpdate(event)
     }
 
-    private inputEvent(event: ClickEvent) {
+    private inputEvent(event: MouseDownEvent) {
         const cell = this.renderer.screenToWorldCoordinates(event.x, event.y)
         const tile = this.gs.tile(cell)
         if (tile.owner() == null && !this.hasSpawned()) {
@@ -128,7 +147,7 @@ export class ClientGame {
 
         if (tile.owner() != this.myPlayer) {
             const id = tile.owner() != null ? tile.owner().id() : null
-            this.sendAttackIntent(id)
+            this.sendAttackIntent(id, cell)
         }
 
     }
@@ -160,7 +179,7 @@ export class ClientGame {
         }
     }
 
-    private sendAttackIntent(targetID: PlayerID) {
+    private sendAttackIntent(targetID: PlayerID, cell: Cell) {
         const attack = JSON.stringify(
             ClientIntentMessageSchema.parse({
                 type: "intent",
@@ -169,7 +188,9 @@ export class ClientGame {
                     type: "attack",
                     attackerID: this.myPlayer.id(),
                     targetID: targetID,
-                    troops: 1000
+                    troops: 2000,
+                    targetX: cell.x,
+                    targetY: cell.y
                 }
             })
         )
