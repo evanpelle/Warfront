@@ -10,6 +10,10 @@
   },
   "include": [
     "src/**/*",
-    "resources/**/*"
+    "resources/**/*",
+    "test/core/GameImpl.test.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

@@ -1,4 +1,4 @@
-import {Cell} from "./GameStateApi";
+import {Cell} from "./GameApi";
 
 export function generateUniqueID(): string {
     const array = new Uint8Array(16);

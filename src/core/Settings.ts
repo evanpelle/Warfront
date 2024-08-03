@@ -1,4 +1,4 @@
-import {PlayerID, TerrainType, TerrainTypes} from "./GameStateApi";
+import {PlayerID, TerrainType, TerrainTypes} from "./GameApi";
 import {Colord, colord} from "colord";
 
 export interface Settings {
@@ -11,6 +11,7 @@ export interface Settings {
 }
 
 export interface Theme {
+	playerInfoColor(id: PlayerID): Colord;
 	territoryColor(id: PlayerID): Colord;
 	borderColor(id: PlayerID): Colord;
 	terrainColor(tile: TerrainType): Colord;
@@ -45,12 +46,21 @@ const pastelTheme = new class implements Theme {
 	private water = colord({r: 160, g: 203, b: 231});
 	private territory = colord({r: 173, g: 216, b: 230});
 
+	playerInfoColor(id: PlayerID): Colord {
+		return colord({r: 0, g: 0, b: 0})
+	}
+
 	territoryColor(id: PlayerID): Colord {
 		return colord({r: (id * 10) % 250, g: (id * 100) % 250, b: (id) % 250});
 	}
 
 	borderColor(id: PlayerID): Colord {
-		return this.territory;
+		const tc = this.territoryColor(id).rgba;
+		return colord({
+			r: Math.min(tc.r + 20, 255),
+			g: Math.min(tc.g + 20, 255),
+			b: Math.min(tc.b + 20, 255)
+		})
 	}
 
 	terrainColor(tile: TerrainType): Colord {

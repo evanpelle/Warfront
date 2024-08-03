@@ -1,6 +1,6 @@
-import {AttackExecution, Executor} from "../core/Executor";
-import {Cell, ClientID, GameState, LobbyID, PlayerEvent, PlayerID, PlayerInfo, Player, TerrainMap, TileEvent, PlayerView} from "../core/GameStateApi";
-import {CreateGameState} from "../core/GameStateImpl";
+import {Executor} from "../core/execution/Executor";
+import {Cell, ClientID, MutableGame, LobbyID, PlayerEvent, PlayerID, PlayerInfo, MutablePlayer, TerrainMap, TileEvent, Player, Game} from "../core/GameApi";
+import {createGame} from "../core/GameImpl";
 import {Ticker, TickEvent} from "../core/Ticker";
 import {EventBus} from "../core/EventBus";
 import {Settings} from "../core/Settings";
@@ -13,7 +13,7 @@ import {AttackIntent, Intent, SpawnIntent} from "../core/Schemas";
 
 export function createClientGame(name: string, clientID: ClientID, lobbyID: LobbyID, settings: Settings, terrainMap: TerrainMap): ClientGame {
     let eventBus = new EventBus()
-    let gs = CreateGameState(terrainMap, eventBus)
+    let gs = createGame(terrainMap, eventBus)
     let gameRenderer = new GameRenderer(gs, settings.theme(), document.createElement("canvas"))
     let ticker = new Ticker(settings.tickIntervalMs(), eventBus)
 
@@ -32,7 +32,7 @@ export function createClientGame(name: string, clientID: ClientID, lobbyID: Lobb
 
 export class ClientGame {
 
-    private myPlayer: PlayerView
+    private myPlayer: Player
     private turns: Turn[] = []
     private socket: WebSocket
     private started = false
@@ -48,7 +48,7 @@ export class ClientGame {
         private lobbyID: LobbyID,
         private ticker: Ticker,
         private eventBus: EventBus,
-        private gs: GameState,
+        private gs: Game,
         private renderer: GameRenderer,
         private input: InputHandler,
         private executor: Executor
@@ -94,14 +94,6 @@ export class ClientGame {
         this.renderer.initialize()
         this.input.initialize()
         this.executor.spawnBots(500)
-        // this.gs.players().filter(p => p.info().isBot).forEach(bot => {
-        //     this.executor.addIntent({
-        //         type: "attack",
-        //         attackerID: bot.id(),
-        //         targetID: null,
-        //         troops: 100
-        //     })
-        // })
 
 
         setInterval(() => this.tick(), 10);
@@ -121,7 +113,8 @@ export class ClientGame {
             this.ticksThisTurn = 0
         }
         this.ticksThisTurn++
-        this.executor.tick()
+        console.log('client ticking')
+        this.gs.tick()
     }
 
     private playerEvent(event: PlayerEvent) {
@@ -137,7 +130,7 @@ export class ClientGame {
     private inputEvent(event: MouseDownEvent) {
         const cell = this.renderer.screenToWorldCoordinates(event.x, event.y)
         const tile = this.gs.tile(cell)
-        if (tile.owner() == null && !this.hasSpawned()) {
+        if (!tile.hasOwner() && !this.hasSpawned()) {
             this.sendSpawnIntent(cell)
             return
         }
@@ -146,7 +139,8 @@ export class ClientGame {
         }
 
         if (tile.owner() != this.myPlayer) {
-            const id = tile.owner() != null ? tile.owner().id() : null
+            const owner = tile.owner()
+            const id = owner.isPlayer() ? owner.id() : null
             this.sendAttackIntent(id, cell)
         }
 

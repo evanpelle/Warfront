@@ -1,9 +1,9 @@
-import {GameID, LobbyID} from "../core/GameStateApi";
+import {GameID, LobbyID} from "../core/GameApi";
 import {Client} from "./Client";
 import {Lobby} from "./Lobby";
 import {GameServer} from "./GameServer";
 import {defaultSettings, Settings} from "../core/Settings";
-import {generateUniqueID} from "../core/Utils";
+import {generateUniqueID} from "../core/Util";
 
 export class GameManager {
 

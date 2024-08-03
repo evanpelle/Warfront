@@ -1,7 +1,13 @@
 import {Colord} from "colord";
-import {Cell, GameState, PlayerEvent, Tile, TileEvent} from "../core/GameStateApi";
+import {Cell, MutableGame, Game, PlayerEvent, Tile, TileEvent, Player} from "../core/GameApi";
 import {Theme} from "../core/Settings";
 import {DragEvent, ZoomEvent} from "./InputHandler";
+import {calculateBoundingBox, placeName} from "./NameBoxCalculator";
+import {PseudoRandom} from "../core/PseudoRandom";
+
+class NameRender {
+	constructor(public lastRendered: number, public location: Cell, public fontSize: number) { }
+}
 
 export class GameRenderer {
 
@@ -13,8 +19,14 @@ export class GameRenderer {
 
 	private imageData: ImageData
 
+	private nameRenders: Map<Player, NameRender> = new Map()
 
-	constructor(private gs: GameState, private theme: Theme, private canvas: HTMLCanvasElement) {
+	private rand = new PseudoRandom(10)
+
+
+
+
+	constructor(private gs: Game, private theme: Theme, private canvas: HTMLCanvasElement) {
 		this.context = canvas.getContext("2d")
 	}
 
@@ -97,7 +109,58 @@ export class GameRenderer {
 			this.gs.height()
 		);
 
+		let numCalcs = 0
+		for (const player of this.gs.players()) {
+			if (numCalcs < 50 && this.maybeRecalculatePlayerInfo(player)) {
+				numCalcs++
+			}
+			this.renderPlayerInfo(player)
+		}
+
 		requestAnimationFrame(() => this.renderGame());
+	}
+
+	maybeRecalculatePlayerInfo(player: Player): boolean {
+		if (!this.nameRenders.has(player)) {
+			this.nameRenders.set(player, new NameRender(0, null, null))
+		}
+
+		const render = this.nameRenders.get(player)
+
+		let wasUpdated = false
+
+		if (Date.now() - render.lastRendered > 1000) {
+			render.lastRendered = Date.now() + this.rand.nextInt(0, 100)
+			wasUpdated = true
+
+			const box = calculateBoundingBox(player)
+			const centerX = box.min.x + ((box.max.x - box.min.x) / 2)
+			const centerY = box.min.y + ((box.max.y - box.min.y) / 2)
+			render.location = new Cell(centerX, centerY)
+			render.fontSize = Math.max(Math.min(box.max.x - box.min.x, box.max.y - box.min.y) / player.info().name.length / 2, 1)
+		}
+		return wasUpdated
+	}
+
+	renderPlayerInfo(player: Player) {
+		if (!player.isAlive()) {
+			return
+		}
+		if (!this.nameRenders.has(player)) {
+			return
+		}
+
+		const render = this.nameRenders.get(player)
+
+		this.context.font = `${render.fontSize}px Arial`;
+		this.context.fillStyle = this.theme.playerInfoColor(player.id()).toHex();
+		this.context.textAlign = 'center';
+		this.context.textBaseline = 'middle';
+
+		const nameCenterX = render.location.x - this.gs.width() / 2
+		const nameCenterY = render.location.y - this.gs.height() / 2
+		this.context.fillText(player.info().name, nameCenterX, nameCenterY - render.fontSize / 2);
+		this.context.fillText(String(Math.floor(player.troops())), nameCenterX, nameCenterY + render.fontSize);
 	}
 
 	tileUpdate(event: TileEvent) {
@@ -118,15 +181,15 @@ export class GameRenderer {
 		// color.toRGB().writeToBuffer(this.imageData.data, index * 4)
 		let terrainColor = this.theme.terrainColor(tile.terrain())
 		this.paintCell(tile.cell(), terrainColor)
-		if (tile.hasOwner()) {
+		const owner = tile.owner()
+		if (owner.isPlayer()) {
 			if (tile.isBorder()) {
-				this.paintCell(tile.cell(), this.theme.territoryColor(tile.owner().id()))
+				this.paintCell(tile.cell(), this.theme.borderColor(owner.id()))
 			} else {
-				this.paintCell(tile.cell(), this.theme.borderColor(tile.owner().id()))
+				this.paintCell(tile.cell(), this.theme.territoryColor(owner.id()))
 			}
 		}
 	}
-
 
 	paintCell(cell: Cell, color: Colord) {
 		const index = (cell.y * this.gs.width()) + cell.x

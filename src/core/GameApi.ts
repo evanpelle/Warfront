@@ -1,3 +1,4 @@
+import {intersection} from "zod"
 import {GameEvent} from "./EventBus"
 
 export type ClientID = string
@@ -14,17 +15,18 @@ export class Cell {
         public readonly y
     ) { }
 
-    string(): string {return `Cell[${this.x, this.y}]`}
+    toString(): string {return `Cell[${this.x},${this.y}]`}
 }
 
 export interface ExecutionView {
     isActive(): boolean
-    owner(): PlayerView
+    owner(): Player
 }
 
 export interface Execution extends ExecutionView {
+    init(mg: MutableGame)
     tick()
-    owner(): Player
+    owner(): MutablePlayer
 }
 
 export class PlayerInfo {
@@ -56,46 +58,48 @@ export interface TerrainMap {
 }
 
 export interface Tile {
-    owner(): PlayerView | TerraNullius
+    owner(): Player | TerraNullius
     hasOwner(): boolean
     isBorder(): boolean
     isInterior(): boolean
     cell(): Cell
     terrain(): Terrain
-    gameState(): GameStateView
+    game(): Game
     neighbors(): Tile[]
 }
 
 export interface TerraNullius {
-    id(): PlayerID
     ownsTile(cell: Cell): boolean
-    borderTilesWith(other: PlayerView): ReadonlySet<Tile>
     isPlayer(): false
 }
 
-export interface PlayerView {
+export interface Player {
     info(): PlayerInfo
     id(): PlayerID
     troops(): number
     ownsTile(cell: Cell): boolean
     isAlive(): boolean
-    gameState(): GameStateView
+    gameState(): Game
     executions(): ExecutionView[]
-    borderTilesWith(other: PlayerView): ReadonlySet<Tile>
-    isPlayer(): this is PlayerView
+    borderTiles(): ReadonlySet<Tile>
+    borderTilesWith(other: Player | TerraNullius): ReadonlySet<Tile>
+    isPlayer(): this is Player
+    neighbors(): (Player | TerraNullius)[]
+    numTilesOwned(): number
 }
 
-export interface Player extends PlayerView {
+export interface MutablePlayer extends Player {
     setTroops(troops: number): void
     addTroops(troops: number): void
     conquer(cell: Cell): void
-    gameState(): GameState
     executions(): Execution[]
+    neighbors(): (MutablePlayer | TerraNullius)[]
 }
 
-export interface GameStateView {
+export interface Game {
     // Throws exception is player not found
-    player(id: PlayerID): PlayerView
+    player(id: PlayerID): Player
+    players(): Player[]
     tile(cell: Cell): Tile
     isOnMap(cell: Cell): boolean
     neighbors(cell: Cell): Cell[]
@@ -103,15 +107,17 @@ export interface GameStateView {
     height(): number
     forEachTile(fn: (tile: Tile) => void): void
     executions(): ExecutionView[]
+    terraNullius(): TerraNullius
+    tick()
+    addExecution(...exec: Execution[])
 }
 
-export interface GameState extends GameStateView {
-    player(id: PlayerID): Player
-    players(): Player[]
-    addPlayer(playerInfo: PlayerInfo): Player
+export interface MutableGame extends Game {
+    player(id: PlayerID): MutablePlayer
+    players(): MutablePlayer[]
+    addPlayer(playerInfo: PlayerInfo): MutablePlayer
     executions(): Execution[]
     removeInactiveExecutions(): void
-    addExecution(exec: Execution)
     removeExecution(exec: Execution)
 }
 
@@ -121,5 +127,5 @@ export class TileEvent implements GameEvent {
 }
 
 export class PlayerEvent implements GameEvent {
-    constructor(public readonly player: PlayerView) { }
+    constructor(public readonly player: Player) { }
 }

@@ -1,8 +1,8 @@
-import {TerrainMap} from "../core/GameStateApi";
+import {TerrainMap} from "../core/GameApi";
 import {ServerMessage, ServerMessageSchema} from "../core/Schemas";
 import {defaultSettings} from "../core/Settings";
 import {loadTerrainMap} from "../core/TerrainMapLoader";
-import {generateUniqueID} from "../core/Utils";
+import {generateUniqueID} from "../core/Util";
 import {ClientGame, createClientGame} from "./ClientGame";
 import {v4 as uuidv4} from 'uuid';
 
@@ -59,6 +59,7 @@ class Client {
         // Join first lobby
         if (!this.hasJoined && lobbies.length > 0) {
             this.hasJoined = true
+            console.log(`joining lobby ${lobbies[0].id}`)
             this.joinLobby(lobbies[0].id)
         }
     }
