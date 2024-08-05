@@ -1,6 +1,6 @@
 import {Jimp as JimpType, JimpConstructors} from '@jimp/core';
 import 'jimp';
-import {TerrainMap, TerrainType, TerrainTypes} from './GameApi';
+import {TerrainMap, TerrainType, TerrainTypes} from './Game';
 import {TerrainMapImpl} from './GameImpl';
 
 declare const Jimp: JimpType & JimpConstructors;

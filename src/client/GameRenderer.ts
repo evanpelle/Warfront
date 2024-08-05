@@ -1,9 +1,10 @@
 import {Colord} from "colord";
-import {Cell, MutableGame, Game, PlayerEvent, Tile, TileEvent, Player} from "../core/GameApi";
+import {Cell, MutableGame, Game, PlayerEvent, Tile, TileEvent, Player, Execution, BoatEvent} from "../core/Game";
 import {Theme} from "../core/Settings";
 import {DragEvent, ZoomEvent} from "./InputHandler";
 import {calculateBoundingBox, placeName} from "./NameBoxCalculator";
 import {PseudoRandom} from "../core/PseudoRandom";
+import {BoatAttackExecution} from "../core/execution/BoatAttackExecution";
 
 class NameRender {
 	constructor(public lastRendered: number, public location: Cell, public fontSize: number) { }
@@ -22,9 +23,6 @@ export class GameRenderer {
 	private nameRenders: Map<Player, NameRender> = new Map()
 
 	private rand = new PseudoRandom(10)
-
-
-
 
 	constructor(private gs: Game, private theme: Theme, private canvas: HTMLCanvasElement) {
 		this.context = canvas.getContext("2d")
@@ -117,6 +115,13 @@ export class GameRenderer {
 			this.renderPlayerInfo(player)
 		}
 
+		// const paths = this.gs.executions().map(e => e as Execution).filter(e => e instanceof BoatAttackExecution).map(e => e as BoatAttackExecution).filter(e => e.path != null).map(e => e.path)
+		// paths.forEach(p => {
+		// 	p.forEach(t => {
+		// 		this.paintCell(t.cell(), new Colord({r: 255, g: 255, b: 255}))
+		// 	})
+		// })
+
 		requestAnimationFrame(() => this.renderGame());
 	}
 
@@ -168,7 +173,12 @@ export class GameRenderer {
 		this.gs.neighbors(event.tile.cell()).forEach(c => this.paintTile(this.gs.tile(c)))
 	}
 
-	playerUpdate(event: PlayerEvent) {
+	playerEvent(event: PlayerEvent) {
+	}
+
+	boatEvent(event: BoatEvent) {
+		this.paintCell(event.boat.cell(), new Colord({r: 255, g: 255, b: 255}))
+		this.gs.neighbors(event.boat.cell()).map(c => this.gs.tile(c)).forEach(t => this.paintTile(t))
 	}
 
 	resize(width: number, height: number): void {

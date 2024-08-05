@@ -1,4 +1,4 @@
-import {Game, Player, Tile, Cell} from '../core/GameApi';
+import {Game, Player, Tile, Cell} from '../core/Game';
 
 export interface Point {
     x: number;

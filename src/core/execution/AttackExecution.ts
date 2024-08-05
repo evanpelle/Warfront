@@ -1,5 +1,5 @@
 import PriorityQueue from "priority-queue-typescript";
-import {Cell, Execution, MutableGame, MutablePlayer, PlayerID, Player, TerrainTypes, TerraNullius, Tile} from "../GameApi";
+import {Cell, Execution, MutableGame, MutablePlayer, PlayerID, Player, TerrainTypes, TerraNullius, Tile} from "../Game";
 import {PseudoRandom} from "../PseudoRandom";
 import {manhattanDist} from "../Util";
 
@@ -18,14 +18,14 @@ export class AttackExecution implements Execution {
         private targetCell: Cell | null
     ) { }
 
-    init(gs: MutableGame) {
+    init(gs: MutableGame, ticks: number) {
         this._owner = gs.player(this._ownerID)
         this.target = this.targetID == null ? gs.terraNullius() : gs.player(this.targetID)
         this.troops = Math.min(this._owner.troops(), this.troops)
         this._owner.setTroops(this._owner.troops() - this.troops)
     }
 
-    tick() {
+    tick(ticks: number) {
         if (!this.active) {
             return
         }

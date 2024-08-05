@@ -1,5 +1,5 @@
 import {EventBus, GameEvent} from "../core/EventBus";
-import {Cell} from "../core/GameApi";
+import {Cell} from "../core/Game";
 
 export class MouseUpEvent implements GameEvent {
     constructor(

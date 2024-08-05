@@ -1,4 +1,4 @@
-import {TerrainMap} from "../core/GameApi";
+import {TerrainMap} from "../core/Game";
 import {ServerMessage, ServerMessageSchema} from "../core/Schemas";
 import {defaultSettings} from "../core/Settings";
 import {loadTerrainMap} from "../core/TerrainMapLoader";

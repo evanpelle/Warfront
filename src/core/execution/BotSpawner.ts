@@ -1,4 +1,4 @@
-import {Cell, Game, TerrainTypes} from "../GameApi";
+import {Cell, Game, TerrainTypes} from "../Game";
 import {PseudoRandom} from "../PseudoRandom";
 import {SpawnIntent} from "../Schemas";
 import {getSpawnCells} from "./Util";

@@ -1,8 +1,8 @@
-# WarFront.io
+# OpenFront.io
 
-<a href="https://discord.gg/tvgfpeCGaD">![Discord](https://img.shields.io/discord/1085091019265159198?logo=discord&label=discord&color=%235865F2)</a>
+OpenFront is an online rts.
 
-WarFront.io is a real-time strategy game that is played in the browser. Still early in development.
+This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO.
 
 ## Building
 
@@ -13,17 +13,10 @@ Before building the project, you will need to install the dependencies. You can 
 ```bash
 git submodule update --init --recursive
 npm install
-npm run prebuild
 ```
 
-To build the project, you can run the following command:
+To run dev build:
 
 ```bash
-npm run build-dev
-```
-
-Or for a production build:
-
-```bash
-npm run build-prod
+npm run dev
 ```

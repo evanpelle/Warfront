@@ -1,5 +1,5 @@
 import {Executor} from "../core/execution/Executor";
-import {Cell, ClientID, MutableGame, LobbyID, PlayerEvent, PlayerID, PlayerInfo, MutablePlayer, TerrainMap, TileEvent, Player, Game} from "../core/GameApi";
+import {Cell, ClientID, MutableGame, LobbyID, PlayerEvent, PlayerID, PlayerInfo, MutablePlayer, TerrainMap, TileEvent, Player, Game, BoatEvent} from "../core/Game";
 import {createGame} from "../core/GameImpl";
 import {Ticker, TickEvent} from "../core/Ticker";
 import {EventBus} from "../core/EventBus";
@@ -87,6 +87,7 @@ export class ClientGame {
         //this.eventBus.on(TickEvent, (e) => this.tick(e))
         this.eventBus.on(TileEvent, (e) => this.renderer.tileUpdate(e))
         this.eventBus.on(PlayerEvent, (e) => this.playerEvent(e))
+        this.eventBus.on(BoatEvent, (e) => this.renderer.boatEvent(e))
         this.eventBus.on(MouseUpEvent, (e) => this.inputEvent(e))
         this.eventBus.on(ZoomEvent, (e) => this.renderer.onZoom(e))
         this.eventBus.on(DragEvent, (e) => this.renderer.onMove(e))
@@ -124,7 +125,7 @@ export class ClientGame {
             console.log('setting name')
             this.myPlayer = event.player
         }
-        this.renderer.playerUpdate(event)
+        this.renderer.playerEvent(event)
     }
 
     private inputEvent(event: MouseDownEvent) {
@@ -138,10 +139,16 @@ export class ClientGame {
             return
         }
 
+        const owner = tile.owner()
+        const targetID = owner.isPlayer() ? owner.id() : null
         if (tile.owner() != this.myPlayer) {
-            const owner = tile.owner()
-            const id = owner.isPlayer() ? owner.id() : null
-            this.sendAttackIntent(id, cell)
+            if (this.myPlayer.sharesBorderWith(tile.owner())) {
+                this.sendAttackIntent(targetID, cell)
+            } else {
+                // TODO verify on ocean
+                console.log('going to send boat')
+                this.sendBoatAttackIntent(targetID, cell)
+            }
         }
 
     }
@@ -191,6 +198,30 @@ export class ClientGame {
         console.log(attack)
         if (this.socket.readyState === WebSocket.OPEN) {
             console.log(`sending attack intent: ${attack}`)
+            this.socket.send(attack)
+        } else {
+            console.log('WebSocket is not open. Current state:', this.socket.readyState);
+        }
+    }
+
+    private sendBoatAttackIntent(targetID: PlayerID, cell: Cell) {
+        const attack = JSON.stringify(
+            ClientIntentMessageSchema.parse({
+                type: "intent",
+                clientID: this.id,
+                intent: {
+                    type: "boat",
+                    attackerID: this.myPlayer.id(),
+                    targetID: targetID,
+                    troops: 2000,
+                    x: cell.x,
+                    y: cell.y,
+                }
+            })
+        )
+        console.log(attack)
+        if (this.socket.readyState === WebSocket.OPEN) {
+            console.log(`sending boat attack intent: ${attack}`)
             this.socket.send(attack)
         } else {
             console.log('WebSocket is not open. Current state:', this.socket.readyState);

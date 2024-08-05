@@ -1,4 +1,4 @@
-import {Cell, Execution, MutableGame, MutablePlayer, PlayerID, PlayerInfo} from "../GameApi"
+import {Cell, Execution, MutableGame, MutablePlayer, PlayerID, PlayerInfo} from "../Game"
 import {PseudoRandom} from "../PseudoRandom"
 import {AttackExecution} from "./AttackExecution";
 
@@ -16,11 +16,11 @@ export class BotExecution implements Execution {
         this.attackRate = this.random.nextInt(100, 500)
     }
 
-    init(gs: MutableGame) {
+    init(gs: MutableGame, ticks: number) {
         this.gs = gs
     }
 
-    tick() {
+    tick(ticks: number) {
         if (!this.bot.isAlive()) {
             this.active = false
             return

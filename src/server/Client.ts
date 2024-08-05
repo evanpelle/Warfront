@@ -1,4 +1,4 @@
-import {ClientID} from "../core/GameApi";
+import {ClientID} from "../core/Game";
 import WebSocket from 'ws';
 
 

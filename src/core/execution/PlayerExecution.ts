@@ -1,4 +1,4 @@
-import {Execution, MutableGame, MutablePlayer, PlayerID} from "../GameApi"
+import {Execution, MutableGame, MutablePlayer, PlayerID} from "../Game"
 
 export class PlayerExecution implements Execution {
 
@@ -7,11 +7,11 @@ export class PlayerExecution implements Execution {
     constructor(private playerID: PlayerID) {
     }
 
-    init(gs: MutableGame) {
+    init(gs: MutableGame, ticks: number) {
         this.player = gs.player(this.playerID)
     }
 
-    tick() {
+    tick(ticks: number) {
         this.player.addTroops(Math.sqrt(this.player.numTilesOwned() * this.player.troops() + 1000) / 1000)
     }
 

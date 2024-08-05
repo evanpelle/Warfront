@@ -1,4 +1,4 @@
-import {Game, Cell, TerrainTypes} from "../GameApi";
+import {Game, Cell, TerrainTypes} from "../Game";
 
 
 export function getSpawnCells(gs: Game, cell: Cell): Cell[] {

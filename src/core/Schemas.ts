@@ -1,11 +1,12 @@
 import {z} from 'zod';
 
-export type Intent = SpawnIntent | AttackIntent
+export type Intent = SpawnIntent | AttackIntent | BoatAttackIntent
+
 export type AttackIntent = z.infer<typeof AttackIntentSchema>
 export type SpawnIntent = z.infer<typeof SpawnIntentSchema>
+export type BoatAttackIntent = z.infer<typeof BoatAttackIntentSchema>
 
 export type Turn = z.infer<typeof TurnSchema>
-
 
 export type ClientMessage = ClientIntentMessage | ClientJoinMessage
 export type ServerMessage = ServerSyncMessage | ServerStartGameMessage
@@ -21,7 +22,7 @@ export type ClientJoinMessage = z.infer<typeof ClientJoinMessageSchema>
 
 // Zod schemas
 const BaseIntentSchema = z.object({
-    type: z.enum(['attack', 'spawn']),
+    type: z.enum(['attack', 'spawn', 'boat']),
 });
 
 export const AttackIntentSchema = BaseIntentSchema.extend({
@@ -42,7 +43,16 @@ export const SpawnIntentSchema = BaseIntentSchema.extend({
     y: z.number(),
 })
 
-const IntentSchema = z.union([AttackIntentSchema, SpawnIntentSchema]);
+export const BoatAttackIntentSchema = BaseIntentSchema.extend({
+    type: z.literal('boat'),
+    attackerID: z.number(),
+    targetID: z.number().nullable(),
+    troops: z.number(),
+    x: z.number(),
+    y: z.number(),
+})
+
+const IntentSchema = z.union([AttackIntentSchema, SpawnIntentSchema, BoatAttackIntentSchema]);
 
 const TurnSchema = z.object({
     turnNumber: z.number(),

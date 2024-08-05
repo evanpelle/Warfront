@@ -1,4 +1,3 @@
-import {intersection} from "zod"
 import {GameEvent} from "./EventBus"
 
 export type ClientID = string
@@ -24,8 +23,8 @@ export interface ExecutionView {
 }
 
 export interface Execution extends ExecutionView {
-    init(mg: MutableGame)
-    tick()
+    init(mg: MutableGame, ticks: number)
+    tick(ticks: number)
     owner(): MutablePlayer
 }
 
@@ -66,6 +65,21 @@ export interface Tile {
     terrain(): Terrain
     game(): Game
     neighbors(): Tile[]
+    onShore(): boolean
+}
+
+export interface Boat {
+    troops(): number
+    cell(): Cell
+    owner(): Player
+    target(): Player | TerraNullius
+}
+
+export interface MutableBoat extends Boat {
+    move(cell: Cell): void
+    owner(): MutablePlayer
+    target(): MutablePlayer | TerraNullius
+    setTroops(troops: number): void
 }
 
 export interface TerraNullius {
@@ -77,23 +91,27 @@ export interface Player {
     info(): PlayerInfo
     id(): PlayerID
     troops(): number
+    boats(): Boat[]
     ownsTile(cell: Cell): boolean
     isAlive(): boolean
-    gameState(): Game
     executions(): ExecutionView[]
     borderTiles(): ReadonlySet<Tile>
     borderTilesWith(other: Player | TerraNullius): ReadonlySet<Tile>
     isPlayer(): this is Player
     neighbors(): (Player | TerraNullius)[]
     numTilesOwned(): number
+    sharesBorderWith(other: Player | TerraNullius): boolean
 }
 
 export interface MutablePlayer extends Player {
     setTroops(troops: number): void
     addTroops(troops: number): void
+    removeTroops(troops: number): void
     conquer(cell: Cell): void
     executions(): Execution[]
     neighbors(): (MutablePlayer | TerraNullius)[]
+    boats(): MutableBoat[]
+    addBoat(troops: number, cell: Cell, target: Player | TerraNullius): MutableBoat
 }
 
 export interface Game {
@@ -128,4 +146,8 @@ export class TileEvent implements GameEvent {
 
 export class PlayerEvent implements GameEvent {
     constructor(public readonly player: Player) { }
+}
+
+export class BoatEvent implements GameEvent {
+    constructor(public readonly boat: Boat) { }
 }

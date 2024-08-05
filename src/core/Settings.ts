@@ -1,4 +1,4 @@
-import {PlayerID, TerrainType, TerrainTypes} from "./GameApi";
+import {PlayerID, TerrainType, TerrainTypes} from "./Game";
 import {Colord, colord} from "colord";
 
 export interface Settings {

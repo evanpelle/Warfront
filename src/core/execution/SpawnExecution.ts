@@ -1,4 +1,4 @@
-import {Cell, Execution, MutableGame, MutablePlayer, PlayerInfo} from "../GameApi"
+import {Cell, Execution, MutableGame, MutablePlayer, PlayerInfo} from "../Game"
 import {BotExecution} from "./BotExecution"
 import {PlayerExecution} from "./PlayerExecution"
 import {getSpawnCells} from "./Util"
@@ -14,11 +14,11 @@ export class SpawnExecution implements Execution {
     ) { }
 
 
-    init(gs: MutableGame) {
+    init(gs: MutableGame, ticks: number) {
         this.gs = gs
     }
 
-    tick() {
+    tick(ticks: number) {
         if (!this.isActive()) {
             return
         }

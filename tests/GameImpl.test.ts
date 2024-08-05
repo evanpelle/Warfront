@@ -1,6 +1,6 @@
 import {GameImpl, PlayerImpl} from '../src/core/GameImpl';
 import {EventBus} from '../src/core/EventBus';
-import {Game, Cell, MutablePlayer, PlayerInfo, TerrainMap, TerrainTypes, Tile} from '../src/core/GameApi';
+import {Game, Cell, MutablePlayer, PlayerInfo, TerrainMap, TerrainTypes, Tile} from '../src/core/Game';
 
 describe('borderTilesWith', () => {
     let game: GameImpl;

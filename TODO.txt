@@ -1,0 +1,8 @@
+* make boats larger
+* fix conquer expansion
+* improve front page
+* perf improvements on graphics (only draw images to canvas on ticks)
+* better troop addition logic
+* maybe cache neigbors?
+* have boats not get close to shore
+* better algorithm for name render placement

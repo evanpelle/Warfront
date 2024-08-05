@@ -1,4 +1,4 @@
-import {ClientID} from "../core/GameApi";
+import {ClientID} from "../core/Game";
 import {Client} from "./Client";
 
 export class Lobby {

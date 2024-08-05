@@ -1,5 +1,5 @@
 import {EventBus} from "../core/EventBus";
-import {ClientID, GameID} from "../core/GameApi";
+import {ClientID, GameID} from "../core/Game";
 import {ClientMessage, ClientMessageSchema, Intent, ServerStartGameMessage, ServerStartGameMessageSchema, ServerTurnMessageSchema, Turn} from "../core/Schemas";
 import {Settings} from "../core/Settings";
 import {Ticker, TickEvent} from "../core/Ticker";

@@ -1,5 +1,5 @@
 import {EventBus} from "./EventBus";
-import {Cell, Execution, MutableGame, Game, MutablePlayer, PlayerEvent, PlayerID, PlayerInfo, Player, TerrainMap, TerrainType, TerrainTypes, TerraNullius, Tile, TileEvent} from "./GameApi";
+import {Cell, Execution, MutableGame, Game, MutablePlayer, PlayerEvent, PlayerID, PlayerInfo, Player, TerrainMap, TerrainType, TerrainTypes, TerraNullius, Tile, TileEvent, Boat, MutableBoat, BoatEvent} from "./Game";
 
 export function createGame(terrainMap: TerrainMap, eventBus: EventBus): Game {
     return new GameImpl(terrainMap, eventBus)
@@ -16,6 +16,12 @@ class TileImpl implements Tile {
         private readonly _terrain: TerrainType
     ) { }
 
+    onShore(): boolean {
+        return this.neighbors()
+            .filter(t => t.terrain() == TerrainTypes.Water)
+            .length > 0
+    }
+
     hasOwner(): boolean {return this._owner != this.gs._terraNullius}
     owner(): MutablePlayer | TerraNullius {return this._owner}
     isBorder(): boolean {return this.gs.isBorder(this)}
@@ -30,13 +36,62 @@ class TileImpl implements Tile {
     game(): Game {return this.gs}
 }
 
+export class BoatImpl implements MutableBoat {
+
+    constructor(
+        private g: GameImpl,
+        private _cell: Cell,
+        private _troops: number,
+        private _owner: PlayerImpl,
+        private _target: PlayerImpl | TerraNulliusImpl
+    ) { }
+
+    move(cell: Cell): void {
+        this._cell = cell
+        this.g.fireBoatUpdateEvent(this)
+    }
+    setTroops(troops: number): void {
+        this._troops = troops
+    }
+    troops(): number {
+        return this._troops
+    }
+    cell(): Cell {
+        return this._cell
+    }
+    owner(): PlayerImpl {
+        return this._owner
+    }
+    target(): PlayerImpl | TerraNullius {
+        return this._target
+    }
+}
+
 export class PlayerImpl implements MutablePlayer {
+
+    public _boats: BoatImpl[] = []
 
     public _borderTiles: Map<CellString, Tile> = new Map()
     _borderWith: Map<Player | TerraNullius, Set<Tile>> = new Map()
     public tiles: Map<CellString, Tile> = new Map<CellString, Tile>()
 
     constructor(private gs: GameImpl, public readonly _id: PlayerID, public readonly playerInfo: PlayerInfo, private _troops) { }
+
+    addBoat(troops: number, cell: Cell, target: Player | TerraNullius): BoatImpl {
+        const b = new BoatImpl(this.gs, cell, troops, this, target as PlayerImpl | TerraNulliusImpl)
+        this._boats.push(b)
+        this.gs.fireBoatUpdateEvent(b)
+        return b
+    }
+    boats(): BoatImpl[] {
+        return this._boats
+    }
+    sharesBorderWith(other: Player | TerraNullius): boolean {
+        if (!this._borderWith.has(other)) {
+            return false
+        }
+        return this._borderWith.get(other).size > 0
+    }
     numTilesOwned(): number {
         return this.tiles.size
     }
@@ -44,7 +99,6 @@ export class PlayerImpl implements MutablePlayer {
     borderTiles(): ReadonlySet<Tile> {
         return new Set(this._borderTiles.values())
     }
-
 
     neighbors(): (MutablePlayer | TerraNullius)[] {
         const ns: (MutablePlayer | TerraNullius)[] = []
@@ -58,6 +112,9 @@ export class PlayerImpl implements MutablePlayer {
 
     addTroops(troops: number): void {
         this._troops += troops
+    }
+    removeTroops(troops: number): void {
+        this._troops -= troops
     }
 
     isPlayer(): this is MutablePlayer {return true as const}
@@ -122,11 +179,8 @@ export class PlayerImpl implements MutablePlayer {
 }
 
 class TerraNulliusImpl implements TerraNullius {
-
-
     _borderWith: Map<Player | TerraNullius, Set<Tile>> = new Map()
     public tiles: Map<Cell, Tile> = new Map<Cell, Tile>()
-
 
     constructor(private gs: MutableGame) { }
 
@@ -139,8 +193,6 @@ class TerraNulliusImpl implements TerraNullius {
     isPlayer(): false {return false as const}
 
 }
-
-
 
 export class TerrainMapImpl implements TerrainMap {
 
@@ -160,6 +212,8 @@ export class TerrainMapImpl implements TerrainMap {
 }
 
 export class GameImpl implements MutableGame {
+    private ticks = 0
+
     private unInitExecs: Execution[] = []
 
     idCounter: PlayerID = 1; // Zero reserved for TerraNullius
@@ -185,12 +239,14 @@ export class GameImpl implements MutableGame {
     }
 
     tick() {
-        this.unInitExecs.forEach(e => e.init(this))
+        this.executions().forEach(e => e.tick(this.ticks))
+        this.unInitExecs.forEach(e => e.init(this, this.ticks))
+
+        this.removeInactiveExecutions()
+
         this.execs.push(...this.unInitExecs)
         this.unInitExecs = []
-
-        this.executions().forEach(e => e.tick())
-        this.removeInactiveExecutions()
+        this.ticks++
     }
 
     terraNullius(): TerraNullius {
@@ -326,8 +382,6 @@ export class GameImpl implements MutableGame {
             newOwner.addCalcBorderWithTile(tile)
         }
 
-
-
         neighbors.map(t => (t as TileImpl)).forEach(t => {
             const p = t._owner
             if (p.isPlayer()) {
@@ -338,20 +392,6 @@ export class GameImpl implements MutableGame {
                 previousOwner.deleteBorderWithTile(tile, p)
             }
         })
-
-        // tiles.forEach(t => {
-        //     const owner = (t as TileImpl)._owner
-        //     if (owner.isPlayer()) {
-        //         owner.updateBorderWithTile(t, previousOwner, t.owner())
-        //     }
-
-        //     if (!cellOwner._borderWith.has(t.owner())) {
-        //         cellOwner._borderWith.set(t.owner(), new Set())
-        //     }
-        //     if (t.owner() != cellOwner) {
-        //         cellOwner._borderWith.get(t.owner()).add(this.tile(cell))
-        //     }
-        // })
     }
 
     isBorder(tile: Tile): boolean {
@@ -367,4 +407,9 @@ export class GameImpl implements MutableGame {
         }
         return false
     }
+
+    public fireBoatUpdateEvent(boat: Boat) {
+        this.eventBus.emit(new BoatEvent(boat))
+    }
+
 }
